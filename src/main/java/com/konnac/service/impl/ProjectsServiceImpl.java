@@ -1,4 +1,4 @@
 package com.konnac.service.impl;
 
-public class usersServiceImpl {
+public class ProjectsServiceImpl {
 }
