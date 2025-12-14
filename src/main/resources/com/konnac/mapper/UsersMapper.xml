@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.UsersMapper">
+
+    <sql id="commonSelect">
+        select id, username, password, role, real_name, email, created_time, update_time
+        from users
+    </sql>
+
+
+<!--新增员工-->
+    <insert id="addUser" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users(username, password, role, real_name, email, created_time, update_time)
+        VALUES (#{username}, #{password}, #{role}, #{realName}, #{email}, #{createTime}, #{updateTime})
+    </insert>
+<!--批量删除员工-->
+    <delete id="deleteUser">
+        delete from users where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+<!--修改员工信息-->
+    <update id="updateUser">
+        UPDATE users
+        <set>
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="role != null">
+                role = #{role},
+            </if>
+            <if test="realName != null and realName != ''">
+                real_name = #{realName},
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+<!--分页查询-->
+    <select id="list" resultType="com.konnac.pojo.User">
+        <include refid="commonSelect"></include>
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="username != null and username != ''">
+                and username like '%${username}%'
+            </if>
+            <if test="realName != null and realName != ''">
+                and real_name like '%${realName}%'
+            </if>
+            <if test="role != null">
+                and role = #{role}
+            </if>
+            <if test="begin != null">
+                and created_time between #{begin} and #{end}
+            </if>
+            <if test="end != null">
+                and created_time between #{begin} and #{end}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>
