@@ -1,0 +1,25 @@
+spring:
+  #数据库连接信息
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/management
+    username: root
+    password: 1234
+  #文件上传信息
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+mybatis:
+  # 配置 mybatis
+  configuration:
+    # 配置MyBatis的日志实现（显示SQL语句）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 开启驼峰命名自动转换（数据库下划线 → Java驼峰命名）
+    map-underscore-to-camel-case: true
+
+#spring事务管理日志 作用: 配置spring事务管理日志
+logging:
+  level:
+    org.springframework.jdbc.support.JdbcTransactionManager: debug
