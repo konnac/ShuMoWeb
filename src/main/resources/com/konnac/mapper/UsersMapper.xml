@@ -5,70 +5,115 @@
 <mapper namespace="com.konnac.mapper.UsersMapper">
 
     <sql id="commonSelect">
-        select id, username, password, role, real_name, email, created_time, update_time
-        from users
+        SELECT id, username, password, role, real_name, email, created_time, update_time
+        FROM users
     </sql>
 
-
-<!--新增员工-->
+    <!-- 新增员工 -->
     <insert id="addUser" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO users(username, password, role, real_name, email, created_time, update_time)
-        VALUES (#{username}, #{password}, #{role}, #{realName}, #{email}, #{createTime}, #{updateTime})
+        INSERT INTO users (
+            username, password, role, real_name, email, created_time, update_time
+        ) VALUES (
+                     #{username}, #{password}, #{role}, #{realName}, #{email}, #{createTime}, #{updateTime}
+                 )
     </insert>
-<!--批量删除员工-->
+
+    <!-- 批量删除员工 -->
     <delete id="deleteUser">
-        delete from users where id in
+        DELETE FROM users
+        WHERE id IN
         <foreach collection="ids" item="id" separator="," open="(" close=")">
             #{id}
         </foreach>
     </delete>
-<!--修改员工信息-->
+
+    <!-- 修改员工信息 -->
     <update id="updateUser">
         UPDATE users
         <set>
-            <if test="username != null and username != ''">
+            <if test="username != null and username.trim() != ''">
                 username = #{username},
             </if>
-            <if test="password != null and password != ''">
+            <!-- 密码特殊处理：允许设置为空字符串，但需要加密 -->
+            <if test="password != null">
                 password = #{password},
             </if>
             <if test="role != null">
                 role = #{role},
             </if>
-            <if test="realName != null and realName != ''">
+            <!-- 真实姓名：允许清空，所以只判断非null -->
+            <if test="realName != null">
                 real_name = #{realName},
             </if>
-            <if test="email != null and email != ''">
+            <!-- 邮箱：允许清空，所以只判断非null -->
+            <if test="email != null">
                 email = #{email},
             </if>
             update_time = #{updateTime}
         </set>
         WHERE id = #{id}
     </update>
-<!--分页查询-->
+
+    <!-- 分页查询 -->
     <select id="list" resultType="com.konnac.pojo.User">
-        <include refid="commonSelect"></include>
+        <include refid="commonSelect"/>
         <where>
             <if test="id != null">
-                and id = #{id}
+                AND id = #{id}
             </if>
-            <if test="username != null and username != ''">
-                and username like '%${username}%'
+            <if test="username != null and username.trim() != ''">
+                AND username LIKE CONCAT('%', #{username}, '%')
             </if>
-            <if test="realName != null and realName != ''">
-                and real_name like '%${realName}%'
+            <!-- 修复：real_name 参数名应为 realName -->
+            <if test="realName != null and realName.trim() != ''">
+                AND real_name LIKE CONCAT('%', #{realName}, '%')
             </if>
             <if test="role != null">
-                and role = #{role}
+                AND role = #{role}
             </if>
-            <if test="begin != null">
-                and created_time between #{begin} and #{end}
-            </if>
-            <if test="end != null">
-                and created_time between #{begin} and #{end}
-            </if>
+            <!-- 优化创建时间范围查询 -->
+            <choose>
+                <when test="begin != null and end != null">
+                    AND created_time BETWEEN #{begin} AND #{end}
+                </when>
+                <when test="begin != null">
+                    AND created_time >= #{begin}
+                </when>
+                <when test="end != null">
+                    AND #{end} >= created_time
+                </when>
+            </choose>
         </where>
+        <!-- 添加排序，提高查询可预测性 -->
+        ORDER BY created_time DESC
     </select>
 
+    <!-- 新增：根据用户名查询用户（用于登录校验等场景） -->
+    <select id="selectByUsername" resultType="com.konnac.pojo.User">
+        <include refid="commonSelect"/>
+        WHERE username = #{username}
+        LIMIT 1
+    </select>
+
+    <!-- 新增：检查用户名是否存在 -->
+    <select id="existsByUsername" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM users
+        WHERE username = #{username}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 新增：批量更新员工状态（示例） -->
+    <update id="batchUpdateRole">
+        UPDATE users
+        SET role = #{role},
+        update_time = #{updateTime}
+        WHERE id IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
 
 </mapper>

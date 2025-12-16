@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.ProjectsMapper">
+
+    <sql id="commonSelect">
+        select id, name, description, manager_id, start_date, end_date,
+               priority, status, created_time, update_time
+        from projects
+    </sql>
+
+    <!-- 新增项目 -->
+    <insert id="addProject" useGeneratedKeys="true" keyProperty="id">
+        insert into projects(name, description, manager_id, start_date,
+                             end_date, priority, status, created_time, update_time)
+        VALUES (#{name}, #{description}, #{managerId}, #{startDate},
+                #{endDate}, #{priority}, #{status}, #{createdTime}, #{updateTime})
+    </insert>
+
+    <!-- 批量删除项目 -->
+    <delete id="deleteProject">
+        delete from projects where id in
+        <foreach item="id" collection="ids" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 修改项目信息 -->
+    <update id="updateProject">
+        UPDATE projects
+        <set>
+            <if test="name != null and name.trim() != ''">
+                name = #{name},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="managerId != null">
+                manager_id = #{managerId},
+            </if>
+            <if test="startDate != null">
+                start_date = #{startDate},
+            </if>
+            <if test="endDate != null">
+                end_date = #{endDate},
+            </if>
+            <if test="priority != null">
+                priority = #{priority},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 分页查询 -->
+    <select id="list" resultType="com.konnac.pojo.Project">
+        <include refid="commonSelect"></include>
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="name != null and name.trim() != ''">
+                and name like concat('%', #{name}, '%')
+            </if>
+            <if test="description != null and description.trim() != ''">
+                and description like concat('%', #{description}, '%')
+            </if>
+            <if test="managerId != null">
+                and manager_id = #{managerId}
+            </if>
+            <!-- 项目起止时间范围查询 -->
+            <if test="startDate != null">
+                and start_date >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                and #{endDate} >= end_date
+            </if>
+            <if test="priority != null">
+                and priority = #{priority}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <!-- 创建时间范围查询 -->
+            <if test="begin != null and end != null">
+                and created_time between #{begin} and #{end}
+            </if>
+        </where>
+        <!-- 建议添加排序 -->
+        order by created_time desc
+    </select>
+
+</mapper>

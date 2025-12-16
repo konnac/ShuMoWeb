@@ -2,6 +2,7 @@ package com.konnac.pojo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ public class User {
     private LocalDateTime createTime; //创建时间
     private LocalDateTime updateTime; //修改时间
 
+    @Getter
     public enum UserRole {
         ADMIN("管理员"),
         PROJECT_MANAGER("项目经理"),
@@ -28,10 +30,6 @@ public class User {
 
         UserRole(String description) {
             this.description = description;
-        }
-
-        public String getDescription() {
-            return description;
         }
     }
 }
