@@ -90,7 +90,6 @@
                 and created_time between #{begin} and #{end}
             </if>
         </where>
-        <!-- 建议添加排序 -->
         order by created_time desc
     </select>
 

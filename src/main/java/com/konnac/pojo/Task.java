@@ -2,6 +2,7 @@ package com.konnac.pojo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
@@ -15,17 +16,18 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Task {
     private Integer id;
-    private Integer projectId;
-    private String title;
-    private String description;
-    private Integer assigneeId;
-    private Integer estimatedHours;
-    private Integer actualHours;
-    private LocalDate deadline;
-    private TaskStatus status;
-    private LocalDateTime createdTime;
-    private LocalDateTime updateTime;
+    private Integer projectId; // 项目ID
+    private String title; // 任务标题
+    private String description; // 任务描述
+    private Integer assigneeId; // 任务执行人ID
+    private Integer estimatedHours; // 任务预计工时
+    private Integer actualHours; // 任务实际工时
+    private LocalDate deadline; // 任务截止日期
+    private TaskStatus status; // 任务状态枚举
+    private LocalDateTime createdTime; // 创建时间
+    private LocalDateTime updateTime; // 修改时间
 
+    @Getter
     public enum TaskStatus {
         NOT_STARTED("未开始"),
         IN_PROGRESS("进行中"),
@@ -38,9 +40,6 @@ public class Task {
             this.description = description;
         }
 
-        public String getDescription() {
-            return description;
-        }
     }
 
 }
