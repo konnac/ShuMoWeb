@@ -19,4 +19,7 @@ public interface TasksMapper {
 
     //修改任务
     void updateTask(Task task);
+
+    //查询未完成的任务数
+    int getUncompletedTaskCountByProjectIdAndUserId(Integer projectId, Integer userId);
 }

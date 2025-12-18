@@ -55,5 +55,13 @@
         </set>
         WHERE id = #{id}
     </update>
+<!--查询未完成的任务树-->
+    <select id="getUncompletedTaskCountByProjectIdAndUserId" resultType="int">
+        select count(*)
+        from tasks
+        where project_id = #{projectId}
+          and assignee_id = #{userId}
+          and status != 'completed'
+    </select>
 
 </mapper>

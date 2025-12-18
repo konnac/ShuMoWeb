@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -16,7 +17,7 @@ public class ProjectMember {
     private String email;
     private String avatar;
     private String projectRole;
-    private Date joinDate;
+    private LocalDateTime joinDate;
     private Integer joinBy; // 添加人ID
     private String joinByName; // 添加人姓名
     private MemberStatus status;
@@ -24,6 +25,8 @@ public class ProjectMember {
     private String department; // 部门
     private String phone; // 电话
     private Integer taskCompletionRate; // 任务完成率
+    private LocalDateTime updateTime;
+    private LocalDateTime createdTime;
 
     @Getter
     public enum MemberStatus {

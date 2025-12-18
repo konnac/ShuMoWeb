@@ -1,13 +1,13 @@
 package com.konnac.controller;
 
+import com.konnac.pojo.ProjectMember;
 import com.konnac.pojo.Result;
 import com.konnac.service.ProjectsMemberService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -21,9 +21,24 @@ public class ProjectsMemberController {
     * 添加项目成员
     */
     @PostMapping
-    public Result addProjectMember(@PathVariable Integer projectId, Integer userId, String projectRole, int operatorId) {
-        log.info("添加项目成员，项目id：{}，用户id：{}，项目角色：{}，操作人id：{}", projectId, userId, projectRole, operatorId);
-        projectsMemberService.addProjectMember(projectId, userId, projectRole, operatorId);
+    public Result addProjectMember(@PathVariable Integer projectId, @RequestBody ProjectMember projectMember) {
+        log.info("添加项目成员，项目id：{}，项目成员信息：{}", projectId, projectMember);
+        projectsMemberService.addProjectMember(
+                projectId,
+                projectMember.getUserId(),
+                projectMember.getProjectRole(),
+                projectMember.getJoinBy()
+        );
+       return Result.success();
+    }
+
+    /*
+    * 批量添加项目成员
+    */
+    @PostMapping("/batch")
+    public Result addProjectMembers(@PathVariable Integer projectId, @RequestBody List<ProjectMember> projectMembers){
+        log.info("批量添加项目成员，项目id：{}，项目成员信息：{}", projectId, projectMembers);
+        projectsMemberService.addProjectMembers(projectId, projectMembers);
         return Result.success();
     }
 }

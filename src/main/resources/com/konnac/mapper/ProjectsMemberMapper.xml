@@ -16,6 +16,36 @@
         insert into project_members (project_id, user_id, project_role, join_by, status)
         values (#{projectId}, #{userId}, #{projectRole}, #{joinBy}, #{status})
     </insert>
+<!--根据项目id和用户id获取项目内成员-->
+    <select id="getMemberByProjectIdAndUserId" resultType="com.konnac.pojo.ProjectMember">
+        select *
+        from project_members
+        where project_id = #{projectId}
+        and user_id = #{userId}
+    </select>
+<!--软删除项目成员-->
+    <update id="updateProjectMember">
+        UPDATE project_member
+        <set>
+            <if test="projectRole != null and projectRole != ''">
+                project_role = #{projectRole},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="joinBy != null">
+                join_by = #{joinBy},
+            </if>
+            <if test="joinDate != null">
+                join_date = #{joinDate},
+            </if>
+            <if test="updatedTime != null">
+                updated_time = #{updatedTime}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
 
 
 
