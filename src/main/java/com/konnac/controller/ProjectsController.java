@@ -23,7 +23,7 @@ public class ProjectsController {
 
     //添加项目
     @PostMapping
-    public Result addProject(Project project) {
+    public Result addProject(@RequestBody Project project) {
         log.info("添加项目，项目信息：{}", project);
         projectsService.addProject(project);
         return Result.success();

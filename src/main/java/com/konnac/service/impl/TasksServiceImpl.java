@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 public class TasksServiceImpl implements TasksService {
     @Autowired
     private TasksMapper tasksMapper;
+
+    //添加任务
     @Override
     public void addTask(Task task) {
         task.setCreatedTime(LocalDateTime.now());
@@ -19,17 +21,21 @@ public class TasksServiceImpl implements TasksService {
         tasksMapper.addTask(task);
     }
 
+    //批量删除任务
     @Override
     public void deleteTask(Integer[] ids) {
         tasksMapper.deleteTask(ids);
     }
 
+    //修改任务
     @Override
     public void updateTask(Task task) {
         task.setUpdateTime(LocalDateTime.now());
         tasksMapper.updateTask(task);
     }
 
+
+    //根据id查询任务
     @Override
     public Task getTaskById(Integer id) {
         return tasksMapper.getTaskById(id);

@@ -18,6 +18,7 @@ public class ProjectsServiceImpl implements ProjectsService {
     @Autowired
     private ProjectsMapper projectsMapper;
 
+    //添加项目
     @Override
     public void addProject(Project project) {
         project.setCreatedTime(LocalDateTime.now());
@@ -25,22 +26,26 @@ public class ProjectsServiceImpl implements ProjectsService {
         projectsMapper.addProject(project);
     }
 
+    //删除项目
     @Override
     public void deleteProject(Integer[] ids) {
         projectsMapper.deleteProject(ids);
     }
 
+    //修改项目
     @Override
     public void updateProject(Project project) {
         project.setUpdateTime(LocalDateTime.now());
         projectsMapper.updateProject(project);
     }
 
+    //查询项目
     @Override
     public Project getProjectById(Integer id) {
         return projectsMapper.getProjectById(id);
     }
 
+    //分页查询项目
     @Override
     public PageBean page(Integer page, Integer pageSize, Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end) {
         //1.设置分页参数

@@ -49,6 +49,16 @@ public class Project {
             return MEDIUM;  // 默认返回中等
         }
 
+        // 获取描述
+        public String getDescription() {
+            return description;
+        }
+
+        // 获取等级
+        public Integer getLevel() {
+            return level;
+        }
+
         // 检查是否为最高优先级
         public boolean isHighest() {
             return this == HIGH;

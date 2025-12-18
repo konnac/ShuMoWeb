@@ -19,6 +19,7 @@ public class User {
     private String email; //要做邮箱验证
     private LocalDateTime createTime; //创建时间
     private LocalDateTime updateTime; //修改时间
+    private String avatar; //头像
 
     @Getter
     public enum UserRole {
