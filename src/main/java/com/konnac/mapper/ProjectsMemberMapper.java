@@ -3,6 +3,8 @@ package com.konnac.mapper;
 import com.konnac.pojo.ProjectMember;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface ProjectsMemberMapper {
 
@@ -17,4 +19,10 @@ public interface ProjectsMemberMapper {
 
     //软删除项目成员
     void updateProjectMember(ProjectMember projectMember);
+
+    //获取项目成员列表
+    List<ProjectMember> findActiveByProjectId(Integer projectId);
+
+    //根据用户id获取项目成员
+    List<ProjectMember> findByUserId(Integer userId);
 }

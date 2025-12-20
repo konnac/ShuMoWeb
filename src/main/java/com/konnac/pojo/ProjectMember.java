@@ -3,25 +3,25 @@ package com.konnac.pojo;
 import lombok.Data;
 import lombok.Getter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
+
 
 @Data
 public class ProjectMember {
 
-    private Integer projectId;
-    private Integer userId;
-    private String username;
-    private String realName;
-    private String email;
-    private String avatar;
-    private String projectRole;
-    private LocalDateTime joinDate;
+    private Integer projectId; // 项目ID
+    private Integer userId; // 用户ID
+    private String username; // 用户名
+    private String realName; // 真实姓名
+    private String email; // 邮箱
+    private String avatar; // 头像
+    private String projectRole; // 项目角色
+    private LocalDateTime joinDate; // 加入时间
     private Integer joinBy; // 添加人ID
     private String joinByName; // 添加人姓名
     private MemberStatus status;
     private String userRole; // 系统角色
+    private TaskStats taskStats; // 任务统计
     private String department; // 部门
     private String phone; // 电话
     private Integer taskCompletionRate; // 任务完成率
@@ -40,8 +40,4 @@ public class ProjectMember {
         }
     }
 }
-
-
-
-//    private TaskStats taskStats; // 任务统计
 

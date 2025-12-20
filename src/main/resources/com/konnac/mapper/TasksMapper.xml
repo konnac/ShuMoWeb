@@ -63,5 +63,40 @@
           and assignee_id = #{userId}
           and status != 'completed'
     </select>
+<!--查询用户在项目中的任务统计信息-->
+    <select id="getUserTaskStatsInProject" resultType="com.konnac.pojo.TaskStats">
 
+        select (select count(*) from tasks
+                where project_id = #{projectId}
+                  and assignee_id = #{userId})
+                    as total_tasks,
+                (select count(*) from tasks
+                where project_id = #{projectId}
+                  and assignee_id = #{userId}
+                  and status = 'NOT_STARTED')
+                    as not_started_tasks,
+               (select count(*)
+                from tasks
+                where project_id = #{projectId}
+                  and assignee_id = #{userId}
+                  and status = 'IN_PROGRESS')
+                   as in_progress_tasks,
+               (select count(*)
+                from tasks
+                where project_id = #{projectId}
+                  and assignee_id = #{userId}
+                  and status = 'COMPLETED')
+                   as completed_tasks,
+               (select count(*)
+                from tasks
+                where project_id = #{projectId}
+                  and assignee_id = #{userId}
+                  and status = 'PENDING_REVIEW')
+                   as pending_review_tasks,
+               (select sum(actual_hours)
+               from tasks
+               where project_id = #{projectId}
+                 and assignee_id = #{userId})
+                 as total_hours
+    </select>
 </mapper>

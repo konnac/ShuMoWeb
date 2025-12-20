@@ -1,6 +1,7 @@
 package com.konnac.mapper;
 
 import com.konnac.pojo.Task;
+import com.konnac.pojo.TaskStats;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Service;
@@ -22,4 +23,7 @@ public interface TasksMapper {
 
     //查询未完成的任务数
     int getUncompletedTaskCountByProjectIdAndUserId(Integer projectId, Integer userId);
+
+    //查询用户在项目中的任务统计信息
+    TaskStats getUserTaskStatsInProject(Integer projectId, Integer userId);
 }

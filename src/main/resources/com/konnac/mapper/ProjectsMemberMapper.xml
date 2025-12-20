@@ -45,6 +45,19 @@
         </set>
         WHERE id = #{id}
     </update>
+<!--获取成员列表-->
+    <select id="findActiveByProjectId" resultType="com.konnac.pojo.ProjectMember">
+        select *
+        from project_members
+        where project_id = #{projectId}
+        and status = 'ACTIVE'
+    </select>
+<!--根据id获取成员-->
+    <select id="findByUserId" resultType="com.konnac.pojo.ProjectMember">
+        select *
+        from project_members
+        where user_id = #{userId}
+    </select>
 
 
 
