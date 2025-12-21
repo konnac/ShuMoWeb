@@ -1,5 +1,6 @@
 package com.konnac.service.impl;
 
+import com.konnac.exception.BusinessException;
 import com.konnac.mapper.ProjectsMapper;
 import com.konnac.mapper.ProjectsMemberMapper;
 import com.konnac.mapper.TasksMapper;
@@ -43,23 +44,23 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         //1.验证项目存在
         Project project = projectsMapper.getProjectById(projectId);
         if (project == null) {
-            throw new RuntimeException("项目不存在"); //抛出异常
+            throw new BusinessException("项目不存在");
         }
 
         //2.验证用户存在
         User user = usersMapper.getUserById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException("用户不存在");
         }
 
         //3.验证项目角色合法性
         if (!ProjectRole.isValid(projectRole)) {
-            throw new RuntimeException("无效的项目角色");
+            throw new BusinessException("无效的项目角色");
         }
 
         //4.验证用户是否已经加入项目
         if (projectsMemberMapper.isMemberExist(projectId, userId)) {
-            throw new RuntimeException("用户已是项目成员");
+            throw new BusinessException("用户已是项目成员");
         }
 
         //5.验证添加权限
@@ -102,7 +103,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
             //2.检查是否有未完成任务
             int uncompletedTaskCount = tasksMapper.getUncompletedTaskCountByProjectIdAndUserId(projectId, userId);
             if (uncompletedTaskCount > 0) {
-                throw new RuntimeException("该用户有" + uncompletedTaskCount + "未完成的任务，无法移除");
+                throw new BusinessException("该用户有" + uncompletedTaskCount + "未完成的任务，无法移除");
             }
 
             //3.从项目中移除成员
@@ -132,7 +133,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         //2.更新角色
         ProjectMember projectMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, userId);
         if (projectMember == null) {
-            throw new RuntimeException("用户不是项目成员"); //后续改为自定义错误
+            throw new BusinessException("用户不是项目成员"); //后续改为自定义错误
         }
 
         String oldProjectRole = projectMember.getProjectRole();
@@ -140,7 +141,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         projectMember.setUpdateTime(LocalDateTime.now());
         projectsMemberMapper.updateProjectMember(projectMember);
 
-        //3.发送通知
+        //3.发送通知给被修改的成员(未完成)
     }
 
     //  ======================查询功能======================
@@ -210,6 +211,13 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         return userIds;
     }
 
+    /**
+     * 获取项目成员角色id
+     */
+    public List<Integer> getProjectMembersIds(Integer projectId) {
+        return projectsMemberMapper.getProjectMembersIds(projectId);
+    }
+
     // ======================权限验证======================
 
     /**
@@ -226,7 +234,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         //项目经理只能在自己管理的项目中添加成员
         ProjectMember operatorMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, operatorId);
         if (operatorMember == null || !ProjectRole.PROJECT_MANAGER.equals(operatorMember.getProjectRole())) {
-            throw new RuntimeException("无权限添加成员"); //后续改为自定义错误
+            throw new BusinessException("无权限添加成员");
         }
     }
 
@@ -244,13 +252,13 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         //项目经理只能删除自己管理项目下的成员
         ProjectMember operatorMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, operatorId);
         if (operatorMember == null || !ProjectRole.PROJECT_MANAGER.equals(operatorMember.getProjectRole())) {
-            throw new RuntimeException("无权限删除成员"); //后续改为自定义错误
+            throw new BusinessException("无权限删除成员");
         }
 
         //不能移除项目经理自己(除非管理员)
         ProjectMember targetMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, targetUserId);
         if (targetMember != null && ProjectRole.PROJECT_MANAGER.equals(targetMember.getProjectRole())) {
-            throw new RuntimeException("不能移除项目经理自己"); //后续改为自定义错误
+            throw new BusinessException("不能移除项目经理自己");
         }
     }
 
@@ -268,7 +276,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         //项目经理只能更新自己管理项目下的成员
         ProjectMember operatorMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, operatorId);
         if (operatorMember == null || !ProjectRole.PROJECT_MANAGER.equals(operatorMember.getProjectRole())) {
-            throw new RuntimeException("无权限更新成员"); //后续改为自定义错误
+            throw new BusinessException("无权限更新成员"); //后续改为自定义错误
         }
     }
 

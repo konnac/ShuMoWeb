@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.NotificationMapper">
+
+    <sql id="commonSelect">
+        select id, user_id, title, content, type, related_type,
+               related_id, is_read, created_at
+        from notifications
+    </sql>
+
+    <!-- 新增通知 -->
+    <insert id="insert" parameterType="com.konnac.pojo.Notification" useGeneratedKeys="true" keyProperty="id">
+        insert into notifications(user_id, title, content, type, related_type, related_id, is_read, created_at)
+        values(#{userId}, #{title}, #{content}, #{type}, #{relatedType}, #{relatedId}, #{isRead}, #{createdAt})
+    </insert>
+
+    <!-- 标记已读 -->
+    <update id="markAsRead">
+        update notifications
+        set is_read = true
+        where id = #{notificationId}
+          and user_id = #{userId}
+    </update>
+
+    <!-- 分页查询通知列表 -->
+    <select id="list" resultType="com.konnac.pojo.Notification">
+        <include refid="commonSelect"/>
+        <where>
+            <!-- 用户ID（通常必传，查询特定用户的通知） -->
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+
+            <!-- 标题模糊查询 -->
+            <if test="title != null and title.trim() != ''">
+                AND title LIKE CONCAT('%', #{title}, '%')
+            </if>
+
+            <!-- 通知类型 -->
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+
+            <!-- 关联类型 -->
+            <if test="relatedType != null and relatedType.trim() != ''">
+                AND related_type = #{relatedType}
+            </if>
+
+            <!-- 关联ID -->
+            <if test="relatedId != null">
+                AND related_id = #{relatedId}
+            </if>
+
+            <!-- 是否已读 -->
+            <if test="isRead != null">
+                AND is_read = #{isRead}
+            </if>
+
+            <!-- 创建时间范围查询 -->
+            <choose>
+                <when test="begin != null and end != null">
+                    AND DATE(created_at) BETWEEN #{begin} AND #{end}
+                </when>
+                <when test="begin != null">
+                    AND DATE(created_at) >= #{begin}
+                </when>
+                <when test="end != null">
+                    AND #{end} >= DATE(created_at)
+                </when>
+            </choose>
+        </where>
+        <!-- 按创建时间倒序排序，最新的在前 -->
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 统计未读通知数量 -->
+    <select id="countUnreadByUserId" resultType="int">
+        select count(*)
+        from notifications
+        where user_id = #{userId}
+          and is_read = false
+    </select>
+
+    <!-- 根据ID查询通知 -->
+    <select id="findById" resultType="com.konnac.pojo.Notification">
+        <include refid="commonSelect"></include>
+        where id = #{id}
+    </select>
+
+<!--批量添加通知-->
+    <insert id="insertBatch" parameterType="list">
+        insert into notifications(user_id, title, content, type, related_type, related_id, is_read, created_at)
+        values
+        <foreach collection="notifications" item="notification" separator=",">
+            (#{notification.userId}, #{notification.title}, #{notification.content},
+            #{notification.type}, #{notification.relatedType}, #{notification.relatedId},
+            #{notification.isRead}, #{notification.createdAt})
+        </foreach>
+    </insert>
+    <!-- 批量删除通知 -->
+    <delete id="deleteBatch">
+        delete from notifications
+        where id in
+        <foreach collection="notificationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        and user_id = #{userId}
+    </delete>
+
+    <!-- 删除用户所有已读通知 -->
+    <delete id="deleteAllReadByUserId">
+        delete from notifications
+        where user_id = #{userId}
+          and is_read = true
+    </delete>
+
+    <!-- 删除用户某个时间前的通知 -->
+    <delete id="deleteByUserIdAndBeforeDate">
+        delete from notifications
+        where user_id = #{userId}
+          and created_at &lt; #{beforeDate}
+    </delete>
+
+</mapper>

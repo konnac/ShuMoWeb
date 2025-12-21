@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Mapper
 public interface TasksMapper {
     //添加任务
@@ -26,4 +28,7 @@ public interface TasksMapper {
 
     //查询用户在项目中的任务统计信息
     TaskStats getUserTaskStatsInProject(Integer projectId, Integer userId);
+
+    //获取任务成员id
+    List<Integer> getTaskMembersId(Integer projectId, Integer taskId);
 }

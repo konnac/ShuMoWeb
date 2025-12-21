@@ -58,8 +58,13 @@
         from project_members
         where user_id = #{userId}
     </select>
-
-
+<!--根据项目id获取项目成员id列表-->
+    <select id="getProjectMembersIds" resultType="java.lang.Integer">
+        select user_id
+        from project_members
+        where project_id = #{projectId}
+        and status = 'ACTIVE'
+    </select>
 
 
 </mapper>

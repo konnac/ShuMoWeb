@@ -20,6 +20,9 @@ public interface ProjectsService {
     //根据id查询项目
     Project getProjectById(Integer id);
 
+    //查询项目成员
+
+
     //分页查询
     PageBean page(Integer page, Integer pageSize, Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status,
                   @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate begin,

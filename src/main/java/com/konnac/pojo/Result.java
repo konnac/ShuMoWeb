@@ -12,16 +12,29 @@ public class Result {
     private String msg;
     private Object data;
 
+//=========成功响应============
+
     //增删改 成功响应
     public static Result success(){
-        return new Result(1,"success",null);
+        return new Result(200,"success",null);
     }
     //查询 成功响应
     public static Result success(Object data){
-        return new Result(1,"success",data);
+        return new Result(200,"success",data);
     }
+
+//========失败响应============
+
     //失败响应
-    public static Result error(String msg){
-        return new Result(0,msg,null);
+    public static Result error(Integer code,String msg){
+        return new Result(code,msg,null);
+    }
+
+    public static Result error(Integer code,String msg,Object data){
+        return new Result(code,msg,data);
+    }
+
+    public static Result error(String message) {
+        return error(500, message);
     }
 }

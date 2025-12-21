@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class TasksServiceImpl implements TasksService {
@@ -39,5 +40,11 @@ public class TasksServiceImpl implements TasksService {
     @Override
     public Task getTaskById(Integer id) {
         return tasksMapper.getTaskById(id);
+    }
+
+    //获取任务中的成员id
+    @Override
+    public List<Integer> getTaskMembersId(Integer projectId, Integer taskId){
+        return tasksMapper.getTaskMembersId(projectId, taskId);
     }
 }

@@ -99,4 +99,12 @@
                  and assignee_id = #{userId})
                  as total_hours
     </select>
+<!--根据任务id获取任务成员id列表-->
+    <select id="getTaskMembersId" resultType="int">
+        select assignee_id
+        from tasks
+        where project_id = #{projectId}
+          and id = #{taskId}
+          and status = 'ACTIVE'
+    </select>
 </mapper>

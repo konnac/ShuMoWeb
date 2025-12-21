@@ -5,6 +5,7 @@ import com.konnac.pojo.Task;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface TasksService {
     //添加任务
@@ -19,5 +20,11 @@ public interface TasksService {
     //修改任务
     Task getTaskById(Integer id);
 
+    //分页查询
+
+    //获取未完成的任务数
+
+    //获取任务中的成员id
+    List<Integer> getTaskMembersId(Integer projectId, Integer taskId);
 
 }
