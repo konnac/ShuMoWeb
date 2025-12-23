@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public Result handleBusinessException(BusinessException e, HttpServletRequest request) {
         log.error("业务异常: {}, 请求路径: {}", e.getMessage(), request.getRequestURL(), e);
-        return Result.error(e.getCode(), e.getMessage());
+        return Result.error(e.getMessage());
     }
 
     /**

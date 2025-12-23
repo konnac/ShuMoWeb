@@ -20,6 +20,7 @@ public class Task {
     private String title; // 任务标题
     private String description; // 任务描述
     private Integer assigneeId; // 任务执行人ID
+    private String assigneeName; // 任务执行人真实姓名
     private Integer estimatedHours; // 任务预计工时
     private Integer actualHours; // 任务实际工时
     private LocalDate deadline; // 任务截止日期

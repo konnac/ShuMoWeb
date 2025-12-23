@@ -18,15 +18,29 @@ public interface NotificationMapper {
     void insert(Notification notification);
 
     /**
-     * 标记通知为已读
-     */
-    void markAsRead(@Param("notificationId") Integer notificationId,
-                    @Param("userId") Integer userId);
-    /**
      * 批量添加通知
      */
     void insertBatch(List<Notification> notifications);
 
+//============================操作通知============================
+    /**
+     * 标记通知为已读
+     */
+    void markAsRead(@Param("notificationId") Integer notificationId,
+                    @Param("userId") Integer userId);
+
+    /**
+     * 获取用户未读通知数量
+     */
+    Integer countUnreadByUserId(Integer userId);
+
+    /**
+     * 全部已读
+     */
+    void markAllAsRead(Integer userId);
+
+
+//============================删除功能============================
     /**
      * 批量删除通知
      */
@@ -54,10 +68,7 @@ public interface NotificationMapper {
                             Boolean isRead,
                             LocalDate begin,
                             LocalDate end);
-    /**
-     * 获取用户未读通知数量
-     */
-    Integer countUnreadByUserId(Integer userId);
+
 
 
 }

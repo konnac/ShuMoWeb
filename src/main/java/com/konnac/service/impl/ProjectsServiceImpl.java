@@ -2,10 +2,13 @@ package com.konnac.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.konnac.exception.BusinessException;
 import com.konnac.mapper.ProjectsMapper;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Project;
 import com.konnac.service.ProjectsService;
+import com.konnac.utils.PageHelperUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -47,14 +50,16 @@ public class ProjectsServiceImpl implements ProjectsService {
 
     //分页查询项目
     @Override
-    public PageBean page(Integer page, Integer pageSize, Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end) {
-        //1.设置分页参数
-        PageHelper.startPage(page, pageSize);
-        //2.执行查询
-        List<Project> projectsList = projectsMapper.list(id, name, description, priority, status, begin, end);
-        Page<Project> pageBean = (Page<Project>) projectsList;
-
-        //3.获取分页结果
-        return new PageBean(pageBean.getTotal(), pageBean.getResult());
+    public PageBean page(Integer page,
+                         Integer pageSize,
+                         Integer id,
+                         String name,
+                         String description,
+                         Project.Priority priority,
+                         Project.ProjectStatus status,
+                         LocalDate begin,
+                         LocalDate end) throws BusinessException {
+        PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMapper.list(id, name, description, priority, status, begin, end));
+        return new PageBean(pageBean.getTotal(), pageBean.getList());
     }
 }

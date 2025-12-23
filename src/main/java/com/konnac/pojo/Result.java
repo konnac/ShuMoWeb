@@ -23,6 +23,12 @@ public class Result {
         return new Result(200,"success",data);
     }
 
+    //查询 批量成功响应
+    public static Result success(String msg, Object data){
+        return new Result(200, msg,data);
+    }
+
+
 //========失败响应============
 
     //失败响应
@@ -36,5 +42,9 @@ public class Result {
 
     public static Result error(String message) {
         return error(500, message);
+    }
+
+    public static Result error(String message, Object data) {
+        return error(500, message, data);
     }
 }

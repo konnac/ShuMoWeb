@@ -52,6 +52,32 @@
         where project_id = #{projectId}
         and status = 'ACTIVE'
     </select>
+<!--分页查询-->
+    <select id="list" resultType="com.konnac.pojo.ProjectMember">
+# Integer projectId, String name, String realName, String userRole, String department
+        select *
+        from project_members
+        <where>
+            <if test="projectId != null">
+                and project_id = #{projectId}
+            </if>
+            <if test="name != null and name != ''">
+                and username like concat('%', #{name}, '%')
+            </if>
+            <if test="realName != null and realName != ''">
+                and real_name like concat('%', #{realName}, '%')
+            </if>
+            <if test="userRole != null and userRole != ''">
+                and user_role like concat('%', #{userRole}, '%')
+            </if>
+            <if test="department != null and department != ''">
+                and department like concat('%', #{department}, '%')
+            </if>
+            Order by id desc
+        </where>
+
+
+    </select>
 <!--根据id获取成员-->
     <select id="findByUserId" resultType="com.konnac.pojo.ProjectMember">
         select *

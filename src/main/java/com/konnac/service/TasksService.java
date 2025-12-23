@@ -21,6 +21,15 @@ public interface TasksService {
     Task getTaskById(Integer id);
 
     //分页查询
+    PageBean page(Integer page,
+                  Integer pageSize,
+                  Integer projectId,
+                  Integer Id,
+                  String title,
+                  String assigneeName,
+                  Task.TaskStatus status,
+                  @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate begin,
+                  @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end);
 
     //获取未完成的任务数
 

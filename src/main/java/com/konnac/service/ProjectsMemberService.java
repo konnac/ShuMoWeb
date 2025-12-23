@@ -1,5 +1,7 @@
 package com.konnac.service;
 
+import com.konnac.pojo.BatchResult;
+import com.konnac.pojo.PageBean;
 import com.konnac.pojo.ProjectMember;
 import com.konnac.pojo.UserProject;
 
@@ -17,7 +19,7 @@ public interface ProjectsMemberService {
     /**
      * 批量添加项目成员
      */
-    void addProjectMembers(Integer projectId, List<ProjectMember> members);
+    BatchResult addProjectMembers(Integer projectId, List<ProjectMember> members);
 
     /**
      * 删除项目成员
@@ -30,6 +32,10 @@ public interface ProjectsMemberService {
     void updateMemberRole(Integer projectId, Integer userId, String newProjectRole, Integer operatorId);
 
     //  ======================查询功能======================
+    /**
+     * 分页查询项目成员
+     */
+    PageBean page(Integer page, Integer pageSize, Integer projectId, String name, String realName, String userRole, String department);
 
     /**
      * 获取项目成员列表

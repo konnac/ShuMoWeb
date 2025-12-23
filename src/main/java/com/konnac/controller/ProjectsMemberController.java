@@ -1,6 +1,7 @@
 package com.konnac.controller;
 
-import com.konnac.mapper.ProjectsMemberMapper;
+import com.konnac.exception.BusinessException;
+import com.konnac.pojo.BatchResult;
 import com.konnac.pojo.ProjectMember;
 import com.konnac.pojo.Result;
 import com.konnac.service.ProjectsMemberService;
@@ -16,8 +17,8 @@ import java.util.List;
 public class ProjectsMemberController {
     @Autowired
     private ProjectsMemberService projectsMemberService;
-    @Autowired
-    private ProjectsMemberMapper projectsMemberMapper;
+
+
 
 
     /*
@@ -40,16 +41,25 @@ public class ProjectsMemberController {
     */
     @PostMapping("/batch")
     public Result addProjectMembers(@PathVariable Integer projectId, @RequestBody List<ProjectMember> projectMembers){
-        log.info("批量添加项目成员，项目id：{}，项目成员信息：{}", projectId, projectMembers);
-        projectsMemberService.addProjectMembers(projectId, projectMembers);
-        return Result.success();
+        // 调用Service，得到批量操作结果
+        BatchResult batchResult = projectsMemberService.addProjectMembers(projectId, projectMembers);
+
+        // 包装为统一的Result返回给前端
+        if (batchResult.isAllSuccess()) {
+            return Result.success("全部添加成功", batchResult);
+        } else if (batchResult.getFailureCount() > 0) {
+            // 部分成功，使用特定状态码
+            return Result.error(201, "部分添加成功", batchResult);
+        } else {
+            return Result.error("添加失败", batchResult);
+        }
     }
 
     /*
     * 删除项目成员
     */
-    @DeleteMapping("/{userId}")
-    public Result deleteProjectMembers(@PathVariable Integer projectId, @PathVariable Integer[] userIds, @PathVariable Integer operatorId){
+    @DeleteMapping("/{userIds}")
+    public Result deleteProjectMembers(@PathVariable Integer projectId, Integer[] userIds, Integer operatorId){
         log.info("删除项目成员，项目id：{}，用户id：{}，操作人id：{}", projectId, userIds, operatorId);
         projectsMemberService.deleteProjectMembers(projectId, userIds, operatorId);
         return Result.success();
@@ -71,9 +81,9 @@ public class ProjectsMemberController {
     public Result getProjectMembers(@PathVariable Integer projectId, @PathVariable Integer operatorId){
         log.info("获取项目成员列表，项目id：{}，操作人id：{}", projectId, operatorId);
         //验证权限
-        if (!projectsMemberMapper.isMemberExist(projectId, operatorId)){
-            throw new RuntimeException("无权查看项目成员"); //后续改为自定义错误
-        }
+//        if (!projectsMemberMapper.isMemberExist(projectId, operatorId)){
+//            throw new RuntimeException("无权查看项目成员"); //后续改为自定义错误
+//        }
 
         return Result.success(projectsMemberService.getProjectMembers(projectId));
     }

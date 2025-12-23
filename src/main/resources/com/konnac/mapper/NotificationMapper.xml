@@ -24,6 +24,13 @@
           and user_id = #{userId}
     </update>
 
+    <!--全部已读-->
+    <update id="markAllAsRead">
+        update notifications
+        set is_read = true
+        where user_id = #{userId}
+    </update>
+
     <!-- 分页查询通知列表 -->
     <select id="list" resultType="com.konnac.pojo.Notification">
         <include refid="commonSelect"/>
@@ -89,7 +96,7 @@
         where id = #{id}
     </select>
 
-<!--批量添加通知-->
+    <!--批量添加通知-->
     <insert id="insertBatch" parameterType="list">
         insert into notifications(user_id, title, content, type, related_type, related_id, is_read, created_at)
         values
@@ -99,6 +106,7 @@
             #{notification.isRead}, #{notification.createdAt})
         </foreach>
     </insert>
+
     <!-- 批量删除通知 -->
     <delete id="deleteBatch">
         delete from notifications

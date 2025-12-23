@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -31,4 +32,13 @@ public interface TasksMapper {
 
     //获取任务成员id
     List<Integer> getTaskMembersId(Integer projectId, Integer taskId);
+
+    //分页查询
+    List<Task> list(Integer projectId,
+                    Integer Id,
+                    String title,
+                    String assigneeName,
+                    Task.TaskStatus status,
+                    LocalDate begin,
+                    LocalDate end);
 }

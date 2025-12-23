@@ -107,4 +107,37 @@
           and id = #{taskId}
           and status = 'ACTIVE'
     </select>
+<!--分页查询-->
+    <select id="list" resultType="com.konnac.pojo.Task">
+        <include refid="commonSelect"></include>
+        <where>
+            <if test="projectId != null">
+                and project_id = #{projectId}
+            </if>
+            <if test="Id != null">
+                and id = #{Id}
+            </if>
+            <if test="title != null and title.trim() != ''">
+                and title like concat('%', #{title}, '%')
+            </if>
+            <if test="assigneeName != null and assigneeName.trim() != ''">
+                and assignee_name like concat('%', #{assigneeName}, '%')
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <choose>
+                <when test="begin != null and end != null">
+                    AND DATE(created_at) BETWEEN #{begin} AND #{end}
+                </when>
+                <when test="begin != null">
+                    AND DATE(created_at) >= #{begin}
+                </when>
+                <when test="end != null">
+                    AND #{end} >= DATE(created_at)
+                </when>
+            </choose>
+        </where>
+        ORDER BY created_at DESC
+    </select>
 </mapper>

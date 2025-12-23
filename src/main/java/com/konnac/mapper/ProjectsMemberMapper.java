@@ -28,4 +28,7 @@ public interface ProjectsMemberMapper {
 
     //获取项目成员id列表
     List<Integer> getProjectMembersIds(Integer projectId);
+
+    //分页获取项目成员
+    List<ProjectMember> list(Integer projectId, String name, String realName, String userRole, String department);
 }
