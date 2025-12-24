@@ -10,20 +10,32 @@ import java.util.List;
 @Mapper
 public interface ProjectsMapper {
 
-
-    //添加项目
+//==============增删改项目==============
+    /**
+     *  添加项目
+     */
     void addProject(Project project);
 
-    //删除项目
-    void deleteProject(Integer[] ids);
+    /**
+     *  修改项目 (软删除)
+     */
+    Integer updateProject(Project project);
 
-    //根据id查询项目
+//==============查询项目================
+    /**
+     *  根据id查询项目
+     */
     @Select("select * from projects where id = #{id}")
     Project getProjectById(Integer id);
 
-    //修改员工
-    void updateProject(Project project);
+    /**
+     *  根据名称查询项目
+     */
+    @Select("select * from projects where name = #{name}")
+    Project getProjectByName(String name);
 
-    //分页查询
+    /**
+     *  分页查询项目
+     */
     List<Project> list(Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end);
 }

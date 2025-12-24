@@ -76,6 +76,7 @@ public class Project {
         IN_PROGRESS("进行中"),
         COMPLETED("已完成"),
         CANCELED("已取消");
+//        DELETED("已删除");
 
         private final String description;
 

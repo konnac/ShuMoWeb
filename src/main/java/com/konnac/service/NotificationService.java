@@ -2,6 +2,7 @@ package com.konnac.service;
 
 import com.konnac.pojo.Notification;
 import com.konnac.pojo.PageBean;
+import com.konnac.pojo.ProjectRole;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
@@ -40,6 +41,11 @@ public interface NotificationService {
      */
     void sendNotificationToTaskMembers(Integer projectId, Integer taskId, String title, String content,
                                        Notification.NotificationType type);
+
+    /**
+     * 构建移除通知
+     */
+
 //================操作通知================
     /**
      * 标记通知为已读
@@ -60,11 +66,6 @@ public interface NotificationService {
      * 全部通知已读
      */
     void markAllAsRead(Integer userId);
-
-    /**
-     * 构建移除通知
-     */
-    void sendRemovalNotification(Integer projectId, Integer userId, Integer operatorId);
 
 //=============查询通知=============
 
@@ -93,5 +94,32 @@ public interface NotificationService {
      */
     void deleteNotificationsBeforeDate(Integer userId, LocalDateTime beforeDate);
 
+//============构建通知=============
+    /**
+     * 构建移除通知
+     */
+    void sendRemovalNotification(Integer projectId, Integer userId, Integer operatorId);
 
+    /**
+     * 构建受添加通知
+     */
+    void sendAddNotification(Integer projectId, Integer userId, Integer operatorId);
+
+    /**
+     * 构建项目成员角色变更通知
+     */
+    void sendUpdateMemberRoleNotification(Integer projectId, Integer userId, Integer operatorId, ProjectRole newRole);
+
+    /**
+     * 构建任务分配通知
+     */
+
+    /**
+     * 构建任务完成通知
+     */
+
+    /**
+     * 构建自定义通知
+     */
+    void sendCustomNotification(Integer projectId, Integer userId, String title, String content);
 }

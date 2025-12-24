@@ -33,7 +33,8 @@ public class Task {
         NOT_STARTED("未开始"),
         IN_PROGRESS("进行中"),
         PENDING_REVIEW("待评审"),
-        COMPLETED("已完成");
+        COMPLETED("已完成"),
+        CANCELLED("已取消");
 
         private final String description;
 

@@ -140,4 +140,13 @@
         </where>
         ORDER BY created_at DESC
     </select>
+<!--查询一个项目中未完成的任务数-->
+    <select id="getUncompletedTaskCountByProjectId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM tasks
+        WHERE project_id = #{projectId}
+          AND status IN ('NOT_STARTED',
+                         'IN_PROGRESS',
+                         'PENDING_REVIEW')
+    </select>
 </mapper>

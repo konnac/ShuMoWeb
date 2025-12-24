@@ -21,23 +21,42 @@ public class ProjectsController {
     @Autowired
     private ProjectsService projectsService;
 
-    //添加项目
+//===============增删改项目==============
+
+    /**
+     *  添加项目
+     */
     @PostMapping
     public Result addProject(@RequestBody Project project) {
         log.info("添加项目，项目信息：{}", project);
-        projectsService.addProject(project);
+        projectsService.addProject(project, project.getManagerId());
         return Result.success();
     }
 
-    //批量删除项目
+    /**
+     *  删除项目
+     */
     @DeleteMapping("/{ids}")
-    public Result deleteProject(@PathVariable Integer[] ids) {
-        log.info("删除项目，项目id：{}", ids);
-        projectsService.deleteProject(ids);
+    public Result deleteProject(@PathVariable Integer[] ids, Integer operatorId) {
+        log.info("删除项目，项目id：{},操作人id: {} ", ids, operatorId);
+        projectsService.deleteProject(ids, operatorId);
         return Result.success();
     }
 
-    //根据id查询项目
+    /**
+     *  修改项目
+     */
+    @PutMapping
+    public Result updateProject( @PathVariable Integer operatorId, @RequestBody Project project) {
+        log.info("修改项目， 项目信息：{}, 操作人id: {}", project, operatorId);
+        projectsService.updateProject(project, project.getManagerId());
+        return Result.success();
+    }
+
+//==============查询项目================
+    /**
+     *  根据id查询项目
+     */
     @GetMapping("/{id}")
     public Result getProject(@PathVariable Integer id) {
         log.info("查询项目，项目id：{}", id);
@@ -45,15 +64,11 @@ public class ProjectsController {
         return Result.success(project);
     }
 
-    //修改项目
-    @PutMapping
-    public Result updateProject(@RequestBody Project project) {
-        log.info("修改项目，项目信息：{}", project);
-        projectsService.updateProject(project);
-        return Result.success();
-    }
 
-    //分页条件查询
+
+    /**
+     *  分页查询项目
+     */
     @RequestMapping
     public Result page(@RequestParam(defaultValue = "1") Integer page,
                        @RequestParam(defaultValue = "10") Integer pageSize,

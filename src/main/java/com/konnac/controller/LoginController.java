@@ -21,7 +21,7 @@ public class LoginController {
 
     @PostMapping
     public Result login(@RequestBody User user){
-        log.info("用户登录，用户信息：{}", user);
+        log.info("用户登录，用户名：{}", user.getUsername());
         User u = loginService.login(user);
         //登陆成功,生成令牌并下发令牌
         if(u != null){
@@ -33,6 +33,7 @@ public class LoginController {
             String jwt = JwtUtils.generateJwt(claims);
             return Result.success(jwt);
         }
+        log.warn("用户登录失败，用户名：{}", user.getUsername());
         return Result.error("用户名或密码错误");
     }
 }

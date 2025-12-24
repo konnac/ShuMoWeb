@@ -39,6 +39,9 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
     @Autowired
     private TasksMapper tasksMapper;
 
+    @Autowired
+    private NotificationService notificationService;
+
 
     // ======================增删改功能======================
 
@@ -48,7 +51,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
     @Transactional(rollbackFor = Exception.class, timeout = 10)
     @Override
     public void addProjectMember(Integer projectId, Integer userId, String projectRole, Integer operatorId) {
-
+        log.debug("添加项目成员: projectId={}, userId={}, projectRole={}, operatorId={}", projectId, userId, projectRole, operatorId);
         //1.验证项目存在
         Project project = projectsMapper.getProjectById(projectId);
         if (project == null) {
@@ -87,12 +90,13 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         projectsMemberMapper.addProjectMember(projectMember);
 
         //8.发送通知
+        notificationService.sendAddNotification(projectId, userId, operatorId);
 
         //9.日志
         log.info("添加项目成员: projectId={}, userId={}, projectRole={}, operatorId={}", projectId, userId, projectRole, operatorId);
     }
 
-    /*
+    /**
      * 批量添加项目成员(允许部分失败)
      */
     @Transactional(
@@ -130,7 +134,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         return batchResult;
     }
 
-    /*
+    /**
      * 删除项目成员
      */
     @Transactional(
@@ -138,11 +142,11 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
             timeout = 15)
     @Override
     public void deleteProjectMembers(Integer projectId, Integer[] userIds, Integer operatorId) {
+        log.info("删除项目成员: projectId={}, userIds={}, operatorId={}", projectId, userIds, operatorId);
         if (userIds == null || userIds.length == 0) {
             throw new BusinessException("成员列表不能为空");
         }
 
-        log.info("删除项目成员: projectId={}, userIds={}, operatorId={}", projectId, userIds, operatorId);
 
         for (Integer userId : userIds) {
             try {
@@ -165,9 +169,10 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
                 log.info("从项目中移除成员: projectId={}, userId={}", projectId, userId);
 
                 //4.对被移除的员工发送通知
-                //notificationService.sendRemovalNotification(projectId, userId, operatorId);
+                notificationService.sendRemovalNotification(projectId, userId, operatorId);
+
             } catch (Exception e) {
-                log.error("移除项目成员异常: projectId={}, userId={}", projectId, userId, e);
+                log.warn("移除项目成员异常: projectId={}, userId={}", projectId, userId, e);
             }
 
 
@@ -185,6 +190,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         verifyUpdatePermission(projectId, operatorId);
 
         //2.更新角色
+        log.debug("更新项目成员角色: projectId={}, userId={}, newProjectRole={}, operatorId={}", projectId, userId, newProjectRole, operatorId);
         ProjectMember projectMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, userId);
         if (projectMember == null) {
             throw new BusinessException("用户不是项目成员"); //后续改为自定义错误
@@ -200,6 +206,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         projectsMemberMapper.updateProjectMember(projectMember);
 
         //3.发送通知给被修改的成员
+        notificationService.sendUpdateMemberRoleNotification(projectId, userId, operatorId, ProjectRole.valueOf(newProjectRole));
 
     }
 
@@ -209,6 +216,8 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      * 获取项目成员列表
      */
     public List<ProjectMember> getProjectMembers(Integer projectId) {
+        log.debug("获取项目成员列表: projectId={}", projectId);
+        log.info("获取项目成员列表成功");
         return projectsMemberMapper.findActiveByProjectId(projectId);
     }
 
@@ -230,6 +239,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      * 获取项目成员角色详细 (待完成)
      */
     public List<ProjectMember> getMembersDetails(Integer projectId) {
+        log.debug("获取项目成员角色详细: projectId={}", projectId);
         List<ProjectMember> projectMembers = getProjectMembers(projectId);
 
         //获取任务统计信息
@@ -237,6 +247,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
             TaskStats taskStats = tasksMapper.getUserTaskStatsInProject(projectId, projectMember.getUserId());
             projectMember.setTaskStats(taskStats);
         }
+        log.info("获取项目成员角色详细成功");
         return projectMembers;
     }
 
@@ -244,6 +255,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      * 获取用户参与的所有项目
      */
     public List<UserProject> getUserProjects(Integer userId) {
+        log.debug("获取用户参与项目: userId={}", userId);
         List<ProjectMember> projectMembers = projectsMemberMapper.findByUserId(userId);
 
         List<UserProject> userProjects = new ArrayList<>();
@@ -265,6 +277,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
                 userProjects.add(userProject);
             }
         }
+        log.info("获取用户参与项目成功");
         return userProjects;
     }
 
@@ -273,6 +286,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      */
 
     public List<Integer> getProjectMembersByRole(Integer projectId, String projectRole) {
+        log.debug("获取项目成员角色: projectId={}, projectRole={}", projectId, projectRole);
         List<ProjectMember> projectMembers = projectsMemberMapper.findActiveByProjectId(projectId);
         List<Integer> userIds = new ArrayList<>();
         //筛选特定角色的成员
@@ -281,6 +295,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
                 userIds.add(projectMember.getUserId());
             }
         }
+        log.info("获取项目成员角色成功");
         return userIds;
     }
 
@@ -288,6 +303,8 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      * 获取项目成员角色id
      */
     public List<Integer> getProjectMembersIds(Integer projectId) {
+        log.debug("获取项目成员角色id: projectId={}", projectId);
+        log.info("获取项目成员角色id成功");
         return projectsMemberMapper.getProjectMembersIds(projectId);
     }
 
@@ -297,10 +314,17 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      * 验证添加成员的权限
      */
     private void verifyAddPermission(Integer projectId, Integer operatorId) {
+        log.debug("验证添加成员的权限:projectId={}, operatorId", projectId, operatorId);
         User operator = usersMapper.getUserById(operatorId);
+
+        //验证用户是否存在
+        if (operator == null) {
+            throw new BusinessException("用户不存在");
+        }
 
         //系统管理员可以添加任何成员
         if (User.UserRole.ADMIN.equals(operator.getRole())) {
+            log.info("验证添加成员的权限成功");
             return;
         }
 
@@ -309,16 +333,19 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         if (operatorMember == null || !ProjectRole.PROJECT_MANAGER.toString().equals(operatorMember.getProjectRole())) {
             throw new BusinessException("无权限添加成员");
         }
+        log.info("验证添加成员的权限成功");
     }
 
     /**
      * 验证删除成员的权限
      */
     private void verifyDeletePermission(Integer projectId, Integer targetUserId, Integer operatorId) {
+        log.debug("验证删除成员的权限:projectId={}, targetUserId={}, operatorId={}", projectId, targetUserId, operatorId);
         User operator = usersMapper.getUserById(operatorId);
 
         //系统管理员可以删除任何成员
         if (User.UserRole.ADMIN.equals(operator.getRole())) {
+            log.info("验证删除成员的权限成功");
             return;
         }
 
@@ -327,6 +354,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         if (operatorMember == null || !ProjectRole.PROJECT_MANAGER.toString().equals(operatorMember.getProjectRole())) {
             throw new BusinessException("无权限删除成员");
         }
+        log.info("验证删除成员的权限成功");
 
         //不能移除项目经理自己(除非管理员)
         ProjectMember targetMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, targetUserId);
@@ -339,10 +367,12 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      * 验证更新成员的权限
      */
     private void verifyUpdatePermission(Integer projectId, Integer operatorId) {
+        log.debug("验证更新成员的权限:projectId={}, operatorId={}", projectId, operatorId);
         User operator = usersMapper.getUserById(operatorId);
 
         //系统管理员可以更新任何成员
         if (User.UserRole.ADMIN.equals(operator.getRole())) {
+            log.info("验证更新成员的权限成功");
             return;
         }
 
@@ -351,6 +381,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         if (operatorMember == null || !ProjectRole.PROJECT_MANAGER.toString().equals(operatorMember.getProjectRole())) {
             throw new BusinessException("无权限更新成员"); //后续改为自定义错误
         }
+        log.info("验证更新成员的权限成功");
     }
 
     // ======================统计功能======================
@@ -359,6 +390,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      * 获取项目成员统计
      */
     public Map<String, Integer> getProjectMemberStats(Integer projectId) {
+        log.debug("获取项目成员统计:projectId={}", projectId);
         List<ProjectMember> members = projectsMemberMapper.findActiveByProjectId(projectId);
 
         Map<String, Integer> stats = new HashMap<>();
@@ -373,7 +405,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         ));
 
         stats.putAll(roleStats);
-
+        log.info("获取项目成员统计成功");
         return stats;
     }
 

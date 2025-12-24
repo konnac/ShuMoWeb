@@ -24,8 +24,11 @@ public interface TasksMapper {
     //修改任务
     void updateTask(Task task);
 
-    //查询未完成的任务数
+    //查询某用户未完成的任务数
     int getUncompletedTaskCountByProjectIdAndUserId(Integer projectId, Integer userId);
+
+    //查询一个项目中未完成的任务数
+    int getUncompletedTaskCountByProjectId(Integer projectId);
 
     //查询用户在项目中的任务统计信息
     TaskStats getUserTaskStatsInProject(Integer projectId, Integer userId);

@@ -54,7 +54,6 @@
     </select>
 <!--分页查询-->
     <select id="list" resultType="com.konnac.pojo.ProjectMember">
-# Integer projectId, String name, String realName, String userRole, String department
         select *
         from project_members
         <where>

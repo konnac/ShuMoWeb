@@ -18,13 +18,8 @@
                 #{endDate}, #{priority}, #{status}, #{createdTime}, #{updateTime})
     </insert>
 
-    <!-- 批量删除项目 -->
-    <delete id="deleteProject">
-        delete from projects where id in
-        <foreach item="id" collection="ids" separator="," open="(" close=")">
-            #{id}
-        </foreach>
-    </delete>
+
+
 
     <!-- 修改项目信息 -->
     <update id="updateProject">
@@ -51,7 +46,7 @@
             <if test="status != null">
                 status = #{status},
             </if>
-            update_time = #{updateTime}
+            update_time = #{updateTime},
         </set>
         WHERE id = #{id}
     </update>
