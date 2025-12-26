@@ -16,13 +16,6 @@
         VALUES (#{projectId}, #{title}, #{description}, #{assigneeId}, #{estimatedHours},
                 #{actualHours}, #{deadline}, #{status}, #{createdTime}, #{updateTime})
     </insert>
-<!--批量删除-->
-    <delete id="deleteTask">
-        delete from tasks where id in
-        <foreach item="id" collection="ids" separator="," open="(" close=")">
-            #{id}
-        </foreach>
-    </delete>
 <!--修改任务信息-->
     <update id="updateTask">
         UPDATE tasks

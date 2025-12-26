@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -77,9 +78,10 @@ public class ProjectsServiceImpl implements ProjectsService {
                     throw new BusinessException("项目id:" + id + ",项目不存在");
                 }
 
-                //  3.验证项目中是否有非完成或取消的任务
+                //  3.验证项目中是否有未完成的任务
                 if (tasksMapper.getUncompletedTaskCountByProjectId(id) > 0) {
-                    throw new BusinessException("项目id:" + id + ",项目下有未完成或取消的任务，不能删除");
+                    log.warn("项目id：{}，项目下有未完成的任务，不能删除", id);
+                    throw new BusinessException("项目id:" + id + ",项目下有未完成的任务，不能删除");
                 }
                 //  3.删除项目
                 project.setStatus(Project.ProjectStatus.CANCELED);
@@ -164,17 +166,17 @@ public class ProjectsServiceImpl implements ProjectsService {
     }
 
 //==============查询项目================
-    /**
-     * 根据id查询项目
-     */
-    @Override
-    public Project getProjectById(Integer id) {
-        log.debug("根据id查询项目，项目id：{}", id);
-        if (id == null) {
-            throw new BusinessException("项目id不能为空");
-        }
-        return projectsMapper.getProjectById(id);
-    }
+//    /**
+//     * 根据id查询项目
+//     */
+//    @Override
+//    public Project getProjectById(Integer id) {
+//        log.debug("根据id查询项目，项目id：{}", id);
+//        if (id == null) {
+//            throw new BusinessException("项目id不能为空");
+//        }
+//        return projectsMapper.getProjectById(id);
+//    }
 
     /**
      *分页查询项目
@@ -188,9 +190,10 @@ public class ProjectsServiceImpl implements ProjectsService {
                          Project.Priority priority,
                          Project.ProjectStatus status,
                          LocalDate begin,
-                         LocalDate end) throws BusinessException {
-        log.debug("分页查询项目，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={}", page, pageSize, id, name, description, priority, status, begin, end);
-        PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMapper.list(id, name, description, priority, status, begin, end));
+                         LocalDate end,
+                         Integer currentUserId) throws BusinessException {
+        log.debug("分页查询项目，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={}, currentUserId={}", page, pageSize, id, name, description, priority, status, begin, end, currentUserId);
+        PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMapper.list(id, name, description, priority, status, begin, end, currentUserId));
         log.info("分页查询项目成功，结果：{}", pageBean);
         return new PageBean(pageBean.getTotal(), pageBean.getList());
     }

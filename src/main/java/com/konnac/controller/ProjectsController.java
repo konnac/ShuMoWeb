@@ -54,15 +54,15 @@ public class ProjectsController {
     }
 
 //==============查询项目================
-    /**
-     *  根据id查询项目
-     */
-    @GetMapping("/{id}")
-    public Result getProject(@PathVariable Integer id) {
-        log.info("查询项目，项目id：{}", id);
-        Project project = projectsService.getProjectById(id);
-        return Result.success(project);
-    }
+//    /**
+//     *  根据id查询项目
+//     */
+//    @GetMapping("/{id}")
+//    public Result getProject(@PathVariable Integer id) {
+//        log.info("查询项目，项目id：{}", id);
+//        Project project = projectsService.getProjectById(id);
+//        return Result.success(project);
+//    }
 
 
 
@@ -78,9 +78,10 @@ public class ProjectsController {
                        Project.Priority priority,
                        Project.ProjectStatus status,
                        @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate begin,
-                       @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate end){
-        log.info("分页查询，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={}", page, pageSize, id, name, description, priority, status, begin, end);
-        PageBean pageBean = projectsService.page(page, pageSize, id, name, description, priority, status, begin, end);
+                       @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate end,
+                       @RequestParam Integer currentUserId){
+        log.info("分页查询，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={},currentUserId={}", page, pageSize, id, name, description, priority, status, begin, end, currentUserId);
+        PageBean pageBean = projectsService.page(page, pageSize, id, name, description, priority, status, begin, end, currentUserId);
 
         return Result.success(pageBean);
     }

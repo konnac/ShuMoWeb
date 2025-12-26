@@ -14,8 +14,8 @@ public interface TasksMapper {
     //添加任务
     void addTask(Task task);
 
-    //批量删除任务
-    void deleteTask(Integer[] ids);
+//    //批量删除任务
+//    void deleteTask(Integer[] ids);
 
     //根据id查询任务
     @Select("select * from tasks where id = #{id}")

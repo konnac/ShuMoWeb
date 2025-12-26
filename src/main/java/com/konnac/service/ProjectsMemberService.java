@@ -52,10 +52,10 @@ public interface ProjectsMemberService {
      */
     List<ProjectMember> getMembersDetails(Integer projectId);
 
-    /**
-     * 获取用户参与的所有项目
-     */
-    List<UserProject> getUserProjects(Integer userId);
+//    /**
+//     * 获取用户参与的所有项目
+//     */
+//    List<UserProject> getUserProjects(Integer userId);
 
     /**
      * 获取项目中的特定角色成员

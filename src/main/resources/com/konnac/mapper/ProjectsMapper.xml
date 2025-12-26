@@ -51,41 +51,50 @@
         WHERE id = #{id}
     </update>
 
-    <!-- 分页查询 -->
+    <!-- 分页查询（修改为查询我参与的项目） -->
     <select id="list" resultType="com.konnac.pojo.Project">
         <include refid="commonSelect"></include>
+        LEFT JOIN management.project_members pm ON p.id = pm.project_id
         <where>
+            <!-- 用户参与条件：用户是项目经理 或者 是项目成员 -->
+            AND (
+            p.manager_id = #{currentUserId}
+            OR (pm.user_id = #{currentUserId} AND pm.status = 'ACTIVE')
+            )
+
             <if test="id != null">
-                and id = #{id}
+                and p.id = #{id}
             </if>
             <if test="name != null and name.trim() != ''">
-                and name like concat('%', #{name}, '%')
+                and p.name like concat('%', #{name}, '%')
             </if>
             <if test="description != null and description.trim() != ''">
-                and description like concat('%', #{description}, '%')
+                and p.description like concat('%', #{description}, '%')
             </if>
-            <if test="managerId != null">
-                and manager_id = #{managerId}
-            </if>
+            <!-- 注意：这里移除了managerId的单独判断，因为已经在上面条件中包含了 -->
+
             <!-- 项目起止时间范围查询 -->
             <if test="startDate != null">
-                and start_date >= #{startDate}
+                and p.start_date >= #{startDate}
             </if>
             <if test="endDate != null">
-                and #{endDate} >= end_date
+                and #{endDate} >= p.end_date
             </if>
+
             <if test="priority != null">
-                and priority = #{priority}
+                and p.priority = #{priority}
             </if>
             <if test="status != null">
-                and status = #{status}
+                and p.status = #{status}
             </if>
+
             <!-- 创建时间范围查询 -->
             <if test="begin != null and end != null">
-                and created_time between #{begin} and #{end}
+                and p.created_time between #{begin} and #{end}
             </if>
         </where>
-        order by created_time desc
+        GROUP BY p.id
+        order by p.created_time desc
     </select>
 
 </mapper>

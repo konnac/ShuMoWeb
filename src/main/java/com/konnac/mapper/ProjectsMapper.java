@@ -37,5 +37,5 @@ public interface ProjectsMapper {
     /**
      *  分页查询项目
      */
-    List<Project> list(Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end);
+    List<Project> list(Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end, Integer currentUserId);
 }

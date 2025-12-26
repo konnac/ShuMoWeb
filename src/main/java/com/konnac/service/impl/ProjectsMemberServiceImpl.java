@@ -173,6 +173,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
 
             } catch (Exception e) {
                 log.warn("移除项目成员异常: projectId={}, userId={}", projectId, userId, e);
+                throw new BusinessException("移除成员异常: " + e.getMessage());
             }
 
 
@@ -193,13 +194,15 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         log.debug("更新项目成员角色: projectId={}, userId={}, newProjectRole={}, operatorId={}", projectId, userId, newProjectRole, operatorId);
         ProjectMember projectMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, userId);
         if (projectMember == null) {
-            throw new BusinessException("用户不是项目成员"); //后续改为自定义错误
+            log.warn("更新项目成员角色失败: 未找到该成员");
+            throw new BusinessException("未找到改项目成员"); //后续改为自定义错误
         }
 
         //3.重复角色抛出异常
         String oldProjectRole = projectMember.getProjectRole();
         projectMember.setProjectRole(newProjectRole);
         if (oldProjectRole.equals(newProjectRole)) {
+            log.warn("更新项目成员角色失败: 角色未改变");
             throw new BusinessException("角色未改变");
         }
         projectMember.setUpdateTime(LocalDateTime.now());
@@ -382,6 +385,27 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
             throw new BusinessException("无权限更新成员"); //后续改为自定义错误
         }
         log.info("验证更新成员的权限成功");
+    }
+
+    /**
+     * 验证获取项目成员列表的权限
+     */
+    private void verifyGetListPermission(Integer projectId, Integer operatorId) {
+        log.debug("验证获取项目成员列表的权限:projectId={}, operatorId={}", projectId, operatorId);
+        User operator = usersMapper.getUserById(operatorId);
+
+        //系统管理员可以获取任何项目成员列表
+        if (User.UserRole.ADMIN.equals(operator.getRole())) {
+            log.info("验证获取项目成员列表的权限成功");
+            return;
+        }
+        //项目内成员可以获取本项目的成员列表
+        ProjectMember operatorMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, operatorId);
+        if (operatorMember != null) {
+            log.info("验证获取项目成员列表的权限成功");
+            return;
+        }
+        throw new BusinessException("无权限获取项目成员列表");
     }
 
     // ======================统计功能======================

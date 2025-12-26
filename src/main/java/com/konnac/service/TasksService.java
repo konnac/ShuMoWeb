@@ -14,11 +14,11 @@ public interface TasksService {
     //批量删除任务
     void deleteTask(Integer[] ids);
 
-    //根据id查询任务
+    //修改任务
     void updateTask(Task task);
 
-    //修改任务
-    Task getTaskById(Integer id);
+//    //根据id查询任务
+//    Task getTaskById(Integer id);
 
     //分页查询
     PageBean page(Integer page,

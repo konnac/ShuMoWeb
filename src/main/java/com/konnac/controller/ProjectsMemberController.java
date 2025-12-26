@@ -2,6 +2,7 @@ package com.konnac.controller;
 
 import com.konnac.exception.BusinessException;
 import com.konnac.pojo.BatchResult;
+import com.konnac.pojo.PageBean;
 import com.konnac.pojo.ProjectMember;
 import com.konnac.pojo.Result;
 import com.konnac.service.ProjectsMemberService;
@@ -13,7 +14,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("projects/{projectId}/members")
+@RequestMapping("/projects/{projectId}/members")
 public class ProjectsMemberController {
     @Autowired
     private ProjectsMemberService projectsMemberService;
@@ -76,17 +77,22 @@ public class ProjectsMemberController {
     }
 
     /**
-     * 获取项目成员列表
+     * 分页查询项目成员
      */
-    @GetMapping("/assignable")
-    public Result getProjectMembers(@PathVariable Integer projectId, Integer operatorId) {
-        log.info("获取项目成员列表，项目id：{}，操作人id：{}", projectId, operatorId);
-        //验证权限
-//        if (!projectsMemberMapper.isMemberExist(projectId, operatorId)){
-//            throw new RuntimeException("无权查看项目成员"); //后续改为自定义错误
-//        }
+    @RequestMapping("/{id}/assignable")
+    public Result page(@RequestParam(defaultValue = "1") Integer page,
+                       @RequestParam(defaultValue = "10") Integer pageSize,
+                       @PathVariable Integer projectId,
+                       @RequestParam(required = false) String name,
+                       @RequestParam(required = false) String realName,
+                       @RequestParam(required = false) String userRole,
+                       @RequestParam(required = false) String department
+                       ){
 
-        return Result.success(projectsMemberService.getProjectMembers(projectId));
+        log.info("获取项目成员列表，项目id：{}", projectId);
+        PageBean pageBean = projectsMemberService.page(page, pageSize, projectId, name, realName, userRole, department);
+
+        return Result.success();
     }
 
     /**
@@ -98,14 +104,14 @@ public class ProjectsMemberController {
         return Result.success(projectsMemberService.getProjectMemberStats(projectId));
     }
 
-    /**
-     * 获取我的项目
-     */
-    @GetMapping("/myprojects")
-    public Result getMyProjects(@PathVariable Integer userId) {
-        log.info("获取我的项目，用户id：{}", userId);
-        return Result.success(projectsMemberService.getUserProjects(userId));
-    }
+//    /**
+//     * 获取我的项目
+//     */
+//    @GetMapping("/myprojects")
+//    public Result getMyProjects(@PathVariable Integer userId) {
+//        log.info("获取我的项目，用户id：{}", userId);
+//        return Result.success(projectsMemberService.getUserProjects(userId));
+//    }
 
     /**
      * 获取项目中的特定角色成员
