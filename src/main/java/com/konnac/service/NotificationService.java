@@ -124,7 +124,7 @@ public interface NotificationService {
     /**
      * 构建任务完成通知
      */
-    void sendTaskCompleteNotification(Integer projectId, Integer taskId, Integer userId, Integer operatorId);
+    void sendTaskCompleteNotification(Integer taskId, Integer userId);
 
     /**
      * 构建自定义通知

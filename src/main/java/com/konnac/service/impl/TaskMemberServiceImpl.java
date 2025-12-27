@@ -102,6 +102,8 @@ public class TaskMemberServiceImpl implements TaskMemberService {
         for (Integer userId : userIds) {
             try {
                 addTaskMember(taskId, userId, "协作者", null);
+                //发送通知
+                notificationService.sendAddNotification(taskId, userId, operatorId);
                 batchResult.addSuccess(userId);
             } catch (BusinessException e) {
                 batchResult.addFailure(userId, e.getMessage());
@@ -122,12 +124,17 @@ public class TaskMemberServiceImpl implements TaskMemberService {
      */
     @RequirePermission(value = PermissionType.TASK_UPDATE, checkTask = true)
     @Override
-    public void deleteTaskMembers(Integer taskId, Integer[] userIds, Integer operatorId) {
+    public void deleteTaskMembers(Integer taskId, List<Integer> userIds, Integer operatorId) {
         log.info("批量删除任务成员: taskId={}, userIds={}, operatorId={}", taskId, userIds, operatorId);
-        if (userIds == null || userIds.length == 0){
+        if (userIds == null || userIds.isEmpty()){
             log.warn("用户列表不能为空");
             throw new BusinessException("用户列表不能为空");
         }
+
+        //包装批量结果
+        BatchResult batchResult = new BatchResult();
+        batchResult.setTotal(userIds.size());
+
 
         for(Integer userId : userIds){
             try{
@@ -167,6 +174,47 @@ public class TaskMemberServiceImpl implements TaskMemberService {
         log.info("更新任务成员角色成功: taskId={}, userId={}, newTaskRole={}, operatorId={}", taskId, userId, newTaskRole, operatorId);
 
         notificationService.sendUpdateMemberRoleNotification(taskId, userId, operatorId, ProjectRole.valueOf(newTaskRole));
+    }
+
+    /**
+     * 发送任务完成通知给任务成员
+     */
+    @Override
+    public BatchResult sendTaskCompleteNotification(Integer taskId) {
+        //获取任务
+        Task task = tasksMapper.getTaskById(taskId);
+        if (task == null) {
+            log.warn("任务不存在: taskId={}", taskId);
+            throw new BusinessException("任务不存在");
+        }
+        //获取任务成员列表
+        List<TaskMember> taskMembers = tasksMemberMapper.list(taskId, null, null, null, null);
+
+        if (taskMembers == null || taskMembers.isEmpty()) {
+            log.warn("任务成员列表为空: taskId={}", taskId);
+            throw new BusinessException("任务成员列表为空");
+        }
+
+        BatchResult batchResult = new BatchResult();
+        batchResult.setTotal(taskMembers.size());
+
+        //2.发送通知
+        for (TaskMember taskMember : taskMembers) {
+            try{
+                log.info("发送任务完成通知给任务成员: taskId={}, userId={}", taskId, taskMember.getUserId());
+                notificationService.sendTaskCompleteNotification(taskId, taskMember.getUserId());
+                batchResult.addSuccess(taskMember.getUserId());
+            } catch (BusinessException e){
+                log.warn("发送任务完成通知给任务成员失败: taskId={}, userId={}, error={}", taskId, taskMember.getUserId(), e.getMessage());
+                batchResult.addFailure(taskMember.getUserId(), e.getMessage());
+            }
+
+        }
+        if (batchResult.isAllFailure()){
+            throw new BusinessException("发送任务完成通知给任务成员失败" + batchResult.getFailureDetails());
+        }
+        log.info("发送任务完成通知给任务成员结果: total={}, successCount={}, failureCount={}", batchResult.getTotal(), batchResult.getSuccessCount(), batchResult.getFailureCount());
+        return batchResult;
     }
 
     /**

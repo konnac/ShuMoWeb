@@ -428,11 +428,10 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 构建任务完成通知
      */
-    public void sendTaskCompleteNotification(Integer projectId, Integer taskId, Integer userId, Integer operatorId) {
+    public void sendTaskCompleteNotification(Integer projectId, Integer taskId, Integer userId) {
         try {
-            log.debug("正在发送任务完成通知: projectId={}, taskId={}, userId={}, operatorId={}", projectId, taskId, userId, operatorId);
+            log.debug("正在发送任务完成通知: projectId={}, taskId={}, userId={}", projectId, taskId, userId);
             Task task = tasksMapper.getTaskById(taskId);
-            User operator = usersMapper.getUserById(operatorId);
 
             //构建通知
             String title = "任务已完成";
@@ -476,4 +475,23 @@ public class NotificationServiceImpl implements NotificationService {
 
     }
 
+    @Override
+    public void sendTaskCompleteNotification(Integer taskId, Integer userId) {
+        try {
+            log.debug("正在发送任务完成通知: taskId={}, userId={}", taskId, userId);
+            Task task = tasksMapper.getTaskById(taskId);
+            String title = "任务已完成";
+            String content = String.format("任务【%s】已完成，请查看详情"
+                    , task != null ? task.getTitle() : taskId
+            );
+            sendNotificationToUser(
+                    userId, title, content,
+                    Notification.NotificationType.TASK_COMPLETED,
+                    "task", taskId
+            );
+            log.info("发送任务完成通知成功: taskId={}, userId={}", taskId, userId);
+        } catch (Exception e) {
+            log.warn("发送任务完成通知失败: taskId={}, userId={}", taskId, userId, e);
+        }
+    }
 }

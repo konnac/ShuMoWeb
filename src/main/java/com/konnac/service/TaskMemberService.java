@@ -21,7 +21,7 @@ public interface TaskMemberService {
     /**
      * 删除任务成员
      */
-    void deleteTaskMembers(Integer taskId, Integer[] userIds, Integer operatorId);
+    void deleteTaskMembers(Integer taskId, List<Integer> userIds, Integer operatorId);
 
     /**
      * 更新任务成员角色
@@ -39,6 +39,13 @@ public interface TaskMemberService {
                   String realName,
                   String taskRole,
                   String department);
+
+    //  ======================其他功能======================
+
+    /**
+     *  发送任务完成通知给任务成员
+     */
+    BatchResult sendTaskCompleteNotification(Integer taskId);
 
     /**
      * 获取任务成员列表

@@ -42,6 +42,7 @@ public class TaskMemberController {
      */
     @PostMapping("/batch")
     public Result addTaskMembers(@PathVariable Integer taskId, @RequestBody List<Integer> taskMembers){
+        log.info("批量添加任务成员，任务id：{}，任务成员id列表：{}", taskId, taskMembers);
         // 调用Service，得到批量操作结果
         BatchResult batchResult = taskMemberService.addTaskMembers(taskId, taskMembers, UserContext.getCurrentUserId());
 
@@ -60,7 +61,7 @@ public class TaskMemberController {
      * 删除任务成员
      */
     @DeleteMapping("/{userIds}")
-    public Result deleteTaskMembers(@PathVariable Integer taskId, Integer[] userIds, Integer operatorId){
+    public Result deleteTaskMembers(@PathVariable Integer taskId, List<Integer> userIds, Integer operatorId){
         log.info("删除任务成员，任务id：{}，用户id：{}，操作人id：{}", taskId, userIds, operatorId);
         taskMemberService.deleteTaskMembers(taskId, userIds, operatorId);
         return Result.success();
@@ -92,4 +93,26 @@ public class TaskMemberController {
         PageBean pageBean = taskMemberService.page(page, pageSize, taskId, name, realName, userRole, department);
         return Result.success(pageBean);
     }
+
+    /**
+     * 发送任务完成通知给任务成员
+     */
+    @PostMapping("/{id}/")
+    public Result sendTaskCompleteNotice(@PathVariable Integer taskId){
+        log.info("发送任务完成通知给任务成员，任务id：{}", taskId);
+        // 调用Service，得到批量操作结果
+        BatchResult batchResult = taskMemberService.sendTaskCompleteNotification(taskId);
+
+        // 包装为统一的Result返回给前端
+        if (batchResult.isAllSuccess()) {
+            return Result.success("全部添加成功", batchResult);
+        } else if (batchResult.getFailureCount() > 0) {
+            // 部分成功，使用特定状态码
+            return Result.error(201, "部分添加成功", batchResult);
+        } else {
+            return Result.error("添加失败", batchResult);
+        }
+    }
+
+
 }
