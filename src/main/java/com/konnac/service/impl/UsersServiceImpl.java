@@ -1,6 +1,8 @@
 package com.konnac.service.impl;
 
 import com.github.pagehelper.PageInfo;
+import com.konnac.annotation.RequirePermission;
+import com.konnac.enums.PermissionType;
 import com.konnac.exception.BusinessException;
 import com.konnac.mapper.UsersMapper;
 import com.konnac.pojo.PageBean;
@@ -9,18 +11,22 @@ import com.konnac.service.UsersService;
 import com.konnac.utils.PageHelperUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Transactional(rollbackFor = Exception.class, timeout = 15)
 @Service
 public class UsersServiceImpl implements UsersService {
     @Autowired
     private UsersMapper UsersMapper;
 
+//==================增删改方法=======================
     /**
      * 添加用户
      */
+    @RequirePermission(value = PermissionType.USER_ADD)
     @Override
     public void addUser(User user) {
         user.setCreateTime(LocalDateTime.now());
@@ -31,19 +37,34 @@ public class UsersServiceImpl implements UsersService {
     /**
      * 删除用户
      */
+    @RequirePermission(value = PermissionType.USER_DELETE)
     @Override
     public void deleteUser(Integer[] ids) {
         UsersMapper.deleteUser(ids);
     }
 
     /**
-     * 修改用户
+     * 修改用户(管理员)
      */
+    @RequirePermission(value = PermissionType.USER_UPDATE_ADMIN)
+    @Override
+    public void updateUserAdmin(User user) {
+        user.setUpdateTime(LocalDateTime.now());
+        UsersMapper.updateUserAdmin(user);
+    }
+
+    /**
+     * 修改用户(普通用户)
+     */
+    @RequirePermission(value = PermissionType.USER_UPDATE)
     @Override
     public void updateUser(User user) {
         user.setUpdateTime(LocalDateTime.now());
         UsersMapper.updateUser(user);
     }
+
+//==================查询=====================
+
 
     /**
      * 根据id查询用户
@@ -56,6 +77,7 @@ public class UsersServiceImpl implements UsersService {
     /**
      * 分页查询
      */
+    @RequirePermission(value = PermissionType.USER_VIEW_DETAIL)
     @Override
     public PageBean page(Integer page,
                          Integer pageSize,

@@ -27,27 +27,54 @@
         </foreach>
     </delete>
 
-    <!-- 修改员工信息 -->
-    <update id="updateUser">
+    <!-- 修改员工信息(管理员) -->
+    <update id="updateUserAdmin">
         UPDATE users
         <set>
             <if test="username != null and username.trim() != ''">
                 username = #{username},
             </if>
-            <!-- 密码特殊处理：允许设置为空字符串，但需要加密 -->
+            <if test="realName != null and realName.trim() != ''">
+                real_name = #{realName},
+            </if>
             <if test="password != null">
                 password = #{password},
             </if>
             <if test="role != null">
                 role = #{role},
             </if>
-            <!-- 真实姓名：允许清空，所以只判断非null -->
-            <if test="realName != null">
-                real_name = #{realName},
-            </if>
-            <!-- 邮箱：允许清空，所以只判断非null -->
             <if test="email != null">
                 email = #{email},
+            </if>
+            <if test="avatar != null">
+                avatar = #{avatar},
+            </if>
+            <if test="department != null">
+                department = #{department},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 修改员工信息(普通) -->
+    <update id="updateUser">
+        UPDATE users
+        <set>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="avatar != null">
+                avatar = #{avatar},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
             </if>
             update_time = #{updateTime}
         </set>

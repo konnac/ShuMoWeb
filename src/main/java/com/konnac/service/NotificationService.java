@@ -1,5 +1,6 @@
 package com.konnac.service;
 
+import com.konnac.pojo.BatchResult;
 import com.konnac.pojo.Notification;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.ProjectRole;
@@ -113,13 +114,20 @@ public interface NotificationService {
     /**
      * 构建任务分配通知
      */
+    void sendTaskAssignNotification(Integer taskId, Integer userId, Integer operatorId);
+
+    /**
+     * 构建从任务移除通知
+     */
+    void sendTaskRemovalNotification(Integer taskId, Integer userId, Integer operatorId);
 
     /**
      * 构建任务完成通知
      */
+    void sendTaskCompleteNotification(Integer projectId, Integer taskId, Integer userId, Integer operatorId);
 
     /**
      * 构建自定义通知
      */
-    void sendCustomNotification(Integer projectId, Integer userId, String title, String content);
+    BatchResult sendCustomNotification(List<Integer> userIds, Notification  notification);
 }

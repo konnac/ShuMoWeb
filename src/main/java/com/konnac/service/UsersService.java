@@ -19,6 +19,11 @@ public interface UsersService {
     void deleteUser(Integer[] id);
 
     /**
+     * 修改用户(管理员)
+     */
+    void updateUserAdmin(User user);
+
+    /**
      * 修改用户
      */
     void updateUser(User user);

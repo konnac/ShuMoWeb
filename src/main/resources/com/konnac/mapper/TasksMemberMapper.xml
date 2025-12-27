@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.TasksMemberMapper">
+
+    <!--判断项目是否已经存在该成员-->
+    <select id="isTaskMemberExist" resultType="boolean">
+        select count(*) > 0
+        from task_members
+        where task_id = #{taskId}
+          and user_id = #{userId}
+    </select>
+    <!--新增项目成员-->
+    <insert id="addTaskMember">
+        insert into task_members (task_id, user_id, task_role, join_by, status)
+        values (#{projectId}, #{userId}, #{projectRole}, #{joinBy}, #{status})
+    </insert>
+    <!--根据项目id和用户id获取项目内成员-->
+    <select id="getMemberByTaskIdAndUserId" resultType="com.konnac.pojo.TaskMember">
+        select *
+        from task_members
+        where task_id = #{taskId}
+          and user_id = #{userId}
+    </select>
+    <!--软删除项目成员-->
+    <update id="updateTaskMember">
+        UPDATE task_members
+        <set>
+            <if test="taskRole != null and taskRole != ''">
+                task_role = #{taskRole},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="joinBy != null">
+                join_by = #{joinBy},
+            </if>
+            <if test="joinDate != null">
+                join_date = #{joinDate},
+            </if>
+            <if test="updatedTime != null">
+                updated_time = #{updatedTime}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <!--获取成员列表-->
+    <select id="findActiveByTaskId" resultType="com.konnac.pojo.TaskMember">
+        select *
+        from task_members
+        where task_id = #{taskId}
+          and status = 'ACTIVE'
+    </select>
+    <!--分页查询-->
+    <select id="list" resultType="com.konnac.pojo.TaskMember">
+        select *
+        from task_members
+        <where>
+            <if test="taskId != null">
+                and task_id = #{taskId}
+            </if>
+            <if test="name != null and name != ''">
+                and username like concat('%', #{name}, '%')
+            </if>
+            <if test="realName != null and realName != ''">
+                and real_name like concat('%', #{realName}, '%')
+            </if>
+            <if test="taskRole != null and taskRole != ''">
+                and task_role like concat('%', #{taskRole}, '%')
+            </if>
+            <if test="department != null and department != ''">
+                and department like concat('%', #{department}, '%')
+            </if>
+            Order by id desc
+        </where>
+
+
+    </select>
+    <!--根据id获取成员-->
+    <select id="findByUserId" resultType="com.konnac.pojo.TaskMember">
+        select *
+        from task_members
+        where user_id = #{userId}
+    </select>
+    <!--根据项目id获取项目成员id列表-->
+    <select id="getTaskMembersIds" resultType="java.lang.Integer">
+        select user_id
+        from task_members
+        where task_id = #{projectId}
+          and status = 'ACTIVE'
+    </select>
+</mapper>

@@ -37,4 +37,36 @@ public class JwtUtils {
                 .getBody();
         return claims;
     }
+
+    /**
+     * 从token中获取用户ID（新增方法）
+     */
+    public static Integer getUserIdFromToken(String token) {
+        try {
+            Claims claims = parseJWT(token);
+            Object userIdObj = claims.get("userId");
+            if (userIdObj instanceof Integer) {
+                return (Integer) userIdObj;
+            } else if (userIdObj instanceof Number) {
+                return ((Number) userIdObj).intValue();
+            } else if (userIdObj instanceof String) {
+                return Integer.parseInt((String) userIdObj);
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 获取用户角色（新增方法）
+     */
+    public static String getUserRoleFromToken(String token) {
+        try {
+            Claims claims = parseJWT(token);
+            return (String) claims.get("role");
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

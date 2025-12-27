@@ -13,13 +13,15 @@ import java.time.LocalDateTime;
 public class User {
     private Integer id;// 用户id
     private String username;// 用户名
-    private String password;// 密码
-    private UserRole role; // ADMIN, PROJECT_MANAGER, EMPLOYEE
     private String realName;// 真实姓名
+    private String password;// 密码
+    private String avatar; //头像
+    private UserRole role; // ADMIN, PROJECT_MANAGER, EMPLOYEE
     private String email; //要做邮箱验证
+    private String department; // 部门
+    private String phone; // 电话
     private LocalDateTime createTime; //创建时间
     private LocalDateTime updateTime; //修改时间
-    private String avatar; //头像
 
     @Getter
     public enum UserRole {

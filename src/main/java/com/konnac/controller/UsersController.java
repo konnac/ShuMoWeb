@@ -8,9 +8,7 @@ import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Result;
 import com.konnac.pojo.User;
 import com.konnac.service.UsersService;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -40,16 +38,16 @@ public class UsersController {
         return Result.success();
     }
 
-    //根据id查询员工
-    @GetMapping("/{id}")
-    public Result getUser(@PathVariable Integer id) {
-        log.info("查询员工，员工id：{}", id);
-        User user = usersService.getUserById(id);
-        return Result.success(user);
+    //修改员工(管理员)
+    @PutMapping("/admin/{id}")
+    public Result updateUserAdmin(@RequestBody User user) {
+        log.info("修改员工，员工信息：{}", user);
+        usersService.updateUserAdmin(user);
+        return Result.success();
     }
 
-    //修改员工
-    @PutMapping
+    //修改员工(普通员工)
+    @PutMapping("/{id}")
     public Result updateUser(@RequestBody User user) {
         log.info("修改员工，员工信息：{}", user);
         usersService.updateUser(user);

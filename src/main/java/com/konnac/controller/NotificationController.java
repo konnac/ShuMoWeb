@@ -1,5 +1,8 @@
 package com.konnac.controller;
 
+import com.konnac.annotation.RequirePermission;
+import com.konnac.enums.PermissionType;
+import com.konnac.pojo.BatchResult;
 import com.konnac.pojo.Notification;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Result;
@@ -21,13 +24,41 @@ public class NotificationController {
     private NotificationService notificationService;
 
     /**
-     * 发送通知
+     * 发送普通公告(管理员和项目经理)
      */
-    @PostMapping("/send")
-    public Result sendNotification(@RequestBody Notification notification) {
-        log.info("发送通知: {}", notification);
-        notificationService.sendNotification(notification);
-        return Result.success();
+    @PostMapping("/send/nor-noti")
+    @RequirePermission(PermissionType.NOTIFICATION_SEND)
+    public Result sendNorNotification(List<Integer> userIds, Notification notification) {
+        // 调用Service，得到批量操作结果
+        BatchResult batchResult = notificationService.sendCustomNotification(userIds, notification);
+        // 包装为统一的Result返回给前端
+        if (batchResult.isAllSuccess()) {
+            return Result.success("全部添加成功", batchResult);
+        } else if (batchResult.getFailureCount() > 0) {
+            // 部分成功，使用特定状态码
+            return Result.error(201, "部分添加成功", batchResult);
+        } else {
+            return Result.error("添加失败", batchResult);
+        }
+    }
+
+    /**
+     * 发送系统公告(管理员)
+     */
+    @PostMapping("/send/sys-noti")
+    @RequirePermission(PermissionType.NOTIFACATION_SEND_ADMIN)
+    public Result sendSysNotification(List<Integer> userIds, Notification notification) {
+        // 调用Service，得到批量操作结果
+        BatchResult batchResult = notificationService.sendCustomNotification(userIds, notification);
+        // 包装为统一的Result返回给前端
+        if (batchResult.isAllSuccess()) {
+            return Result.success("全部添加成功", batchResult);
+        } else if (batchResult.getFailureCount() > 0) {
+            // 部分成功，使用特定状态码
+            return Result.error(201, "部分添加成功", batchResult);
+        } else {
+            return Result.error("添加失败", batchResult);
+        }
     }
 
     /**

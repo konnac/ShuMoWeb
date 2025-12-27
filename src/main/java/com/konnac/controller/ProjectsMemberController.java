@@ -1,6 +1,6 @@
 package com.konnac.controller;
 
-import com.konnac.exception.BusinessException;
+import com.konnac.context.UserContext;
 import com.konnac.pojo.BatchResult;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.ProjectMember;
@@ -41,9 +41,9 @@ public class ProjectsMemberController {
      * 批量添加项目成员
      */
     @PostMapping("/batch")
-    public Result addProjectMembers(@PathVariable Integer projectId, @RequestBody List<ProjectMember> projectMembers) {
+    public Result addProjectMembers(@PathVariable Integer projectId, @RequestBody List<Integer> projectMembers) {
         // 调用Service，得到批量操作结果
-        BatchResult batchResult = projectsMemberService.addProjectMembers(projectId, projectMembers);
+        BatchResult batchResult = projectsMemberService.addProjectMembers(projectId, projectMembers, UserContext.getCurrentUserId());
 
         // 包装为统一的Result返回给前端
         if (batchResult.isAllSuccess()) {
@@ -92,7 +92,7 @@ public class ProjectsMemberController {
         log.info("获取项目成员列表，项目id：{}", projectId);
         PageBean pageBean = projectsMemberService.page(page, pageSize, projectId, name, realName, userRole, department);
 
-        return Result.success();
+        return Result.success(pageBean);
     }
 
     /**

@@ -1,12 +1,13 @@
 package com.konnac.service.impl;
 
 import com.github.pagehelper.PageInfo;
+import com.konnac.annotation.RequirePermission;
+import com.konnac.context.UserContext;
+import com.konnac.enums.PermissionType;
 import com.konnac.exception.BusinessException;
 import com.konnac.mapper.*;
 import com.konnac.pojo.*;
 import com.konnac.service.NotificationService;
-import com.konnac.service.ProjectsMemberService;
-import com.konnac.service.TasksService;
 import com.konnac.utils.PageHelperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +23,12 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Transactional
+@Transactional(rollbackFor = Exception.class, timeout = 10)
 public class NotificationServiceImpl implements NotificationService {
 
     @Autowired
     private NotificationMapper notificationMapper;
 
-    //    @Autowired
-//    private ProjectsMemberService projectsMemberService;
     @Autowired
     private ProjectsMemberMapper projectsMemberMapper;
 
@@ -47,7 +46,6 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 发送通知
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void sendNotification(Notification notification) {
         log.debug("正在发送通知: {}", notification);
@@ -58,9 +56,56 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /**
+     * 发送自定义通知
+     */
+    public BatchResult sendCustomNotification(List<Integer> userIds, Notification notification) {
+        log.debug("正在发送自定义通知: userId={}, notification={}", userIds, notification);
+        //验证参数
+        if (userIds == null || userIds.isEmpty()) {
+            log.warn("用户列表不能为空");
+            throw new BusinessException("用户列表不能为空");
+        }
+
+        //获取当前用户
+        Integer currentUserId = UserContext.getCurrentUserId();
+        User currentUser = usersMapper.getUserById(currentUserId);
+
+        //检查当前用户
+        if (currentUser == null) {
+            throw new BusinessException("当前用户不存在");
+        }
+
+        //1.包装批量结果
+        BatchResult batchResult = new BatchResult();
+        batchResult.setTotal(userIds.size());
+
+        for (Integer userId : userIds) {
+            try {
+                sendNotificationToUser(
+                        userId,
+                        notification.getTitle(),
+                        notification.getContent(),
+                        notification.getType(), // 使用经过校验的类型
+                        notification.getRelatedType(),
+                        notification.getType() == Notification.NotificationType.ANNOUNCEMENT ? -1 : 0);
+                batchResult.addSuccess(userId);
+            } catch (BusinessException e) {
+                batchResult.addFailure(userId, e.getMessage());
+                log.warn("发送自定义通知失败: userId={}", userId, e);
+            }
+        }
+
+        if (batchResult.isAllFailure()) {
+            throw new BusinessException("发送自定义通知失败");
+        }
+
+        log.info("批量添加任务成员结果: total={}, successCount={}, failureCount={}", batchResult.getTotal(), batchResult.getSuccessCount(), batchResult.getFailureCount());
+        return batchResult;
+    }
+
+    /**
      * 发送通知给单个用户
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void sendNotificationToUser(Integer userId, String title, String content,
                                        Notification.NotificationType type,
@@ -81,22 +126,27 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 批量发送通知给多个用户
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @RequirePermission(value = PermissionType.NOTIFICATION_SEND)
     @Override
-    public void sendBatchNotificationToUsers(List<Integer> userIds, String title, String content,
+    public void sendBatchNotificationToUsers(List<Integer> userIds,
+                                             String title,
+                                             String content,
                                              Notification.NotificationType type,
                                              String relatedType, Integer relatedId) {
         log.debug("正在批量发送通知给多个用户: userIds={}, title={}, content={}, type={}, relatedType={}, relatedId={}", userIds, title, content, type, relatedType, relatedId);
+        //验证参数
         if (CollectionUtils.isEmpty(userIds)) {
             throw new BusinessException("用户ID列表不能为空");
         }
 
+        //创建通知列表
         List<Notification> notifications = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
 
         for (Integer userId : userIds) {
+            //创建通知
             Notification notification = new Notification();
-
+            //设置通知
             notification.setUserId(userId);
             notification.setTitle(title);
             notification.setContent(content);
@@ -104,11 +154,12 @@ public class NotificationServiceImpl implements NotificationService {
             notification.setRelatedType(relatedType);
             notification.setRelatedId(relatedId);
             notification.setIsRead(false);
-            notification.setCreatedAt(now);
-
+            notification.setCreatedAt(LocalDateTime.now());
+            //添加到列表
             notifications.add(notification);
         }
 
+        //批量插入
         notificationMapper.insertBatch(notifications);
         log.info("批量发送通知给多个用户成功");
     }
@@ -116,11 +167,11 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 发送通知给项目成员
      */
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @RequirePermission(value = PermissionType.NOTIFICATION_SEND)
     @Override
     public void sendNotificationToProjectMembers(Integer projectId, String title, String content,
                                                  Notification.NotificationType type) {
-        //验证权限(未做)
         // 需要调用项目服务获取项目成员ID列表
         log.debug("正在发送通知给项目成员: projectId={}, title={}, content={}, type={}", projectId, title, content, type);
         Project project = projectsMapper.getProjectById(projectId);
@@ -146,7 +197,7 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 发送通知给任务成员
      */
-    @Transactional(rollbackFor = Exception.class)
+    @RequirePermission(value = PermissionType.NOTIFICATION_SEND_TASK)
     @Override
     public void sendNotificationToTaskMembers(Integer projectId, Integer taskId, String title, String content,
                                               Notification.NotificationType type) {
@@ -178,7 +229,6 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 获取用户未读通知数量
      */
-    @Transactional(readOnly = true)
     @Override
     public Integer getUnreadCount(Integer userId) {
         log.debug("正在获取用户未读通知数量: userId={}", userId);
@@ -189,7 +239,6 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 批量标记通知为已读
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void markAsReadBatch(List<Integer> notificationIds, Integer userId) {
         log.debug("正在批量标记通知为已读: notificationIds={}, userId={}", notificationIds, userId);
@@ -202,7 +251,6 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 全部已读
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void markAllAsRead(Integer userId) {
         log.debug("正在全部已读: userId={}", userId);
@@ -215,7 +263,6 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 分页查询
      */
-    @Transactional(readOnly = true, timeout = 10)
     @Override
     public PageBean page(Integer page,
                          Integer pageSize,
@@ -245,7 +292,7 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 批量删除通知
      */
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, timeout = 30)
     @Override
     public void deleteBatch(List<Integer> notificationIds, Integer userId) {
         log.debug("正在批量删除通知: notificationIds={}, userId={}", notificationIds, userId);
@@ -282,10 +329,12 @@ public class NotificationServiceImpl implements NotificationService {
      */
     public void sendRemovalNotification(Integer projectId, Integer userId, Integer operatorId) {
         try {
+            // 获取项目信息
             log.debug("正在发送移除通知: projectId={}, userId={}, operatorId={}", projectId, userId, operatorId);
             Project project = projectsMapper.getProjectById(projectId);
             User operator = usersMapper.getUserById(operatorId);
 
+            // 构建通知
             String title = "您已被移出项目";
             String content = String.format("您已被%s从项目【%s】中移除",
                     operator != null ? operator.getRealName() : "系统",
@@ -305,7 +354,7 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 构建受添加通知
      */
-    public void sendAddNotification(Integer projectId, Integer userId, Integer operatorId){
+    public void sendAddNotification(Integer projectId, Integer userId, Integer operatorId) {
         try {
             log.debug("正在发送添加通知: projectId={}, userId={}, operatorId={}", projectId, userId, operatorId);
             Project project = projectsMapper.getProjectById(projectId);
@@ -351,29 +400,80 @@ public class NotificationServiceImpl implements NotificationService {
             log.warn("发送更新项目成员角色通知失败: projectId={}, userId={}", projectId, userId, e);
         }
     }
+
     /**
      * 构建任务分配通知
      */
+    public void sendTaskAssignNotification(Integer taskId, Integer userId, Integer operatorId) {
+        try {
+            log.debug("正在发送任务分配通知: taskId={}, userId={}, operatorId={}", taskId, userId, operatorId);
+            Task task = tasksMapper.getTaskById(taskId);
+            User operator = usersMapper.getUserById(operatorId);
+
+            String title = "任务已分配";
+            String content = String.format("任务【%s】已分配给【%s】",
+                    task != null ? task.getTitle() : taskId,
+                    operator != null ? operator.getRealName() : "系统");
+            sendNotificationToUser(
+                    userId, title, content,
+                    Notification.NotificationType.TASK_ASSIGNED,
+                    "task", taskId
+            );
+        } catch (Exception e) {
+            log.warn("发送任务分配通知失败: taskId={}, userId={}", taskId, userId, e);
+        }
+
+    }
 
     /**
      * 构建任务完成通知
      */
-
-    /**
-     * 构建自定义通知
-     */
-    public void sendCustomNotification(Integer projectId, Integer userId, String title, String content){
+    public void sendTaskCompleteNotification(Integer projectId, Integer taskId, Integer userId, Integer operatorId) {
         try {
-            //验证发送通知权限(未做)
-            log.debug("正在发送自定义通知: projectId={}, userId={}, title={}, content={}", projectId, userId, title, content);
+            log.debug("正在发送任务完成通知: projectId={}, taskId={}, userId={}, operatorId={}", projectId, taskId, userId, operatorId);
+            Task task = tasksMapper.getTaskById(taskId);
+            User operator = usersMapper.getUserById(operatorId);
+
+            //构建通知
+            String title = "任务已完成";
+            String content = String.format("任务【%s】已完成，请查看详情",
+                    task != null ? task.getTitle() : taskId);
             sendNotificationToUser(
                     userId, title, content,
-                    Notification.NotificationType.PROJECT_MEMBER_ROLE_CHANGED,
-                    "project", projectId
+                    Notification.NotificationType.TASK_COMPLETED,
+                    "task", taskId
             );
+            log.info("发送任务完成通知成功: projectId={}, taskId={}, userId={}", projectId, taskId, userId);
         } catch (Exception e) {
-            log.warn("发送自定义通知失败: projectId={}, userId={}", projectId, userId, e);
+            log.warn("发送任务完成通知失败: projectId={}, taskId={}, userId={}", projectId, taskId, userId, e);
         }
+    }
+
+    /**
+     * 构建从任务移除通知
+     */
+    public void sendTaskRemovalNotification(Integer taskId, Integer userId, Integer operatorId) {
+        try {
+            // 获取任务信息
+            log.debug("正在发送从任务移除通知: taskId={}, userId={}, operatorId={}", taskId, userId, operatorId);
+            Task task = tasksMapper.getTaskById(taskId);
+            User operator = usersMapper.getUserById(operatorId);
+
+            //  构建通知
+            String title = "您已被移出任务";
+            String content = String.format("任务【%s】已被%s从任务中移除",
+                    task != null ? task.getTitle() : taskId,
+                    operator != null ? operator.getRealName() : "系统");
+            sendNotificationToUser(
+                    userId, title, content,
+                    Notification.NotificationType.TASK_MEMBER_REMOVED,
+                    "task", taskId
+            );
+            log.info("发送从任务移除通知成功: taskId={}, userId={}", taskId, userId);
+        } catch (Exception e) {
+            log.warn("发送从任务移除通知失败: taskId={}, userId={}", taskId, userId, e);
+        }
+
     }
 
 }

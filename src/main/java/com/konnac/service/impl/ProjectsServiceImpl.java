@@ -1,8 +1,9 @@
 package com.konnac.service.impl;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+
 import com.github.pagehelper.PageInfo;
+import com.konnac.annotation.RequirePermission;
+import com.konnac.enums.PermissionType;
 import com.konnac.exception.BusinessException;
 import com.konnac.mapper.ProjectsMapper;
 import com.konnac.mapper.TasksMapper;
@@ -16,13 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestParam;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+
 
 @Slf4j
+@Transactional(rollbackFor = Exception.class, timeout = 15)
 @Service
 public class ProjectsServiceImpl implements ProjectsService {
     @Autowired
@@ -38,12 +38,10 @@ public class ProjectsServiceImpl implements ProjectsService {
     /**
      *添加项目
      */
-    @Transactional(rollbackFor = Exception.class, timeout = 10)
+    @RequirePermission(value = PermissionType.PROJECT_ADD)
     @Override
     public void addProject(Project project, Integer operatorId) {
         log.debug("添加项目，项目信息：{}", project);
-        //  1.验证添加权限
-        verifyAddPermission(operatorId);
 
         //  2.验证项目名称是否重复
         Project existingProject = projectsMapper.getProjectByName(project.getName());
@@ -60,6 +58,7 @@ public class ProjectsServiceImpl implements ProjectsService {
      *删除项目
      */
     @Override
+    @RequirePermission(value = PermissionType.PROJECT_DELETE)
     public void deleteProject(Integer[] ids, Integer operatorId) {
         log.debug("删除项目，项目id：{}", ids);
         //  验证项目列表是否为空
@@ -68,9 +67,6 @@ public class ProjectsServiceImpl implements ProjectsService {
         }
         for(Integer id : ids){
             try {
-                //  1.验证删除权限
-                verifyDeleteAndUpdatePermission(id, operatorId);
-
                 //  2.验证项目是否存在
                 Project project = projectsMapper.getProjectById(id);
                 if (project == null) {
@@ -88,7 +84,7 @@ public class ProjectsServiceImpl implements ProjectsService {
                 project.setUpdateTime(LocalDateTime.now());
                 projectsMapper.updateProject(project);
 
-            }catch (BusinessException e){
+            } catch (BusinessException e){
                 throw e;
             } catch (Exception e) {
                 log.warn("验证权限失败，项目id：{}", id);
@@ -101,12 +97,10 @@ public class ProjectsServiceImpl implements ProjectsService {
      *修改项目
      */
     @Override
+    @RequirePermission(value = PermissionType.PROJECT_UPDATE)
     public void updateProject(Project project, Integer operatorId) {
         log.debug("修改项目，项目信息：{}", project);
         try {
-            //  1.验证修改权限
-            verifyDeleteAndUpdatePermission(project.getId(), operatorId);
-
             //  2.验证项目是否存在
             Project existingProject = projectsMapper.getProjectById(project.getId());
             if (existingProject == null) {
@@ -165,19 +159,6 @@ public class ProjectsServiceImpl implements ProjectsService {
 
     }
 
-//==============查询项目================
-//    /**
-//     * 根据id查询项目
-//     */
-//    @Override
-//    public Project getProjectById(Integer id) {
-//        log.debug("根据id查询项目，项目id：{}", id);
-//        if (id == null) {
-//            throw new BusinessException("项目id不能为空");
-//        }
-//        return projectsMapper.getProjectById(id);
-//    }
-
     /**
      *分页查询项目
      */
@@ -197,64 +178,4 @@ public class ProjectsServiceImpl implements ProjectsService {
         log.info("分页查询项目成功，结果：{}", pageBean);
         return new PageBean(pageBean.getTotal(), pageBean.getList());
     }
-
-//================权限验证================
-    /**
-     * 验证添加项目的权限
-     */
-    private void verifyAddPermission(Integer operatorId){
-        log.debug("验证添加项目的权限: operatorId={}", operatorId);
-        User operator = usersMapper.getUserById(operatorId);
-
-        //验证用户是否存在
-        if (operator == null) {
-            throw new BusinessException("用户不存在");
-        }
-
-        //系统管理员可以添加任何项目
-        if (User.UserRole.ADMIN.equals(operator.getRole())) {
-            log.info("验证添加项目的权限成功");
-            return;
-        }
-
-        //项目经理可以添加项目
-        if (User.UserRole.PROJECT_MANAGER.equals(operator.getRole())) {
-            log.info("验证添加项目的权限成功");
-            return;
-        }
-        throw new BusinessException("无权限添加项目");
-    }
-
-    /**
-     * 验证删除/修改项目的权限
-     */
-    private void verifyDeleteAndUpdatePermission(Integer projectId, Integer operatorId) {
-        log.debug("验证删除/修改项目的权限: projectId={}, operatorId={}", projectId, operatorId);
-        Project project = projectsMapper.getProjectById(projectId);
-        //若项目不存在
-        if (project == null) {
-            throw new BusinessException("项目不存在");
-        }
-        //验证用户存在
-        User operator = usersMapper.getUserById(operatorId);
-        if (operator == null) {
-            throw new BusinessException("用户不存在");
-        }
-
-        //系统管理员可以删除任何项目
-        if (User.UserRole.ADMIN.equals(operator.getRole())) {
-            log.info("验证删除/修改项目的权限成功");
-            return;
-        }
-        //项目经理只能删除自己管理项目下的项目
-        if (User.UserRole.PROJECT_MANAGER.equals(operator.getRole())) {
-            if(!project.getManagerId().equals(operatorId)){
-                throw new BusinessException("无删除/修改权限");
-            }
-            log.info("验证删除/修改项目的权限成功");
-            return;
-        }
-        throw new BusinessException("无删除/修改权限");
-    }
-
 }

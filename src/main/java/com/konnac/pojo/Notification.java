@@ -25,8 +25,10 @@ public class Notification {
         PROJECT_CREATED("项目创建"),
         TASK_ASSIGNED("任务分配"),
         TASK_COMPLETED("任务完成"),
+        TASK_MEMBER_REMOVED("任务成员移除"),
         TASK_DUE_SOON("任务即将到期"),
-        SYSTEM_ANNOUNCEMENT("系统公告");
+        ANNOUNCEMENT("普通通知"), // relatedID : -1
+        SYSTEM_ANNOUNCEMENT("系统通知"); // relatedID : 0
 
         private final String description;
 

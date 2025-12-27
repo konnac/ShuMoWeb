@@ -3,7 +3,6 @@ package com.konnac.service;
 import com.konnac.pojo.BatchResult;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.ProjectMember;
-import com.konnac.pojo.UserProject;
 
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,7 @@ public interface ProjectsMemberService {
     /**
      * 批量添加项目成员
      */
-    BatchResult addProjectMembers(Integer projectId, List<ProjectMember> members);
+    BatchResult addProjectMembers(Integer projectId, List<Integer> userIds, Integer operatorId);
 
     /**
      * 删除项目成员
