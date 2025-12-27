@@ -426,29 +426,6 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /**
-     * 构建任务完成通知
-     */
-    public void sendTaskCompleteNotification(Integer projectId, Integer taskId, Integer userId) {
-        try {
-            log.debug("正在发送任务完成通知: projectId={}, taskId={}, userId={}", projectId, taskId, userId);
-            Task task = tasksMapper.getTaskById(taskId);
-
-            //构建通知
-            String title = "任务已完成";
-            String content = String.format("任务【%s】已完成，请查看详情",
-                    task != null ? task.getTitle() : taskId);
-            sendNotificationToUser(
-                    userId, title, content,
-                    Notification.NotificationType.TASK_COMPLETED,
-                    "task", taskId
-            );
-            log.info("发送任务完成通知成功: projectId={}, taskId={}, userId={}", projectId, taskId, userId);
-        } catch (Exception e) {
-            log.warn("发送任务完成通知失败: projectId={}, taskId={}, userId={}", projectId, taskId, userId, e);
-        }
-    }
-
-    /**
      * 构建从任务移除通知
      */
     public void sendTaskRemovalNotification(Integer taskId, Integer userId, Integer operatorId) {
