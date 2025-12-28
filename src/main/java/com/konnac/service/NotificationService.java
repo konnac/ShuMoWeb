@@ -83,7 +83,7 @@ public interface NotificationService {
     /**
      * 批量删除通知
      */
-    void deleteBatch(List<Integer> notificationIds, Integer userId);
+    BatchResult deleteBatch(List<Integer> notificationIds, Integer userId);
 
     /**
      * 删除用户所有已读通知

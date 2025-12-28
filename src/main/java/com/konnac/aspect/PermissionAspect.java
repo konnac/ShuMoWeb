@@ -4,10 +4,7 @@ import com.konnac.annotation.RequirePermission;
 import com.konnac.context.UserContext;
 import com.konnac.enums.PermissionType;
 import com.konnac.exception.BusinessException;
-import com.konnac.mapper.ProjectsMapper;
-import com.konnac.mapper.ProjectsMemberMapper;
-import com.konnac.mapper.TasksMemberMapper;
-import com.konnac.mapper.UsersMapper;
+import com.konnac.mapper.*;
 import com.konnac.pojo.ProjectMember;
 import com.konnac.pojo.User;
 import com.konnac.utils.AuthUtils;
@@ -41,6 +38,8 @@ public class PermissionAspect {
     private ProjectsMemberMapper projectsMemberMapper;
     @Autowired
     private UsersMapper usersMapper;
+    @Autowired
+    private TasksMapper tasksMapper;
 
 
     @Before("@annotation(requirePermission)")
@@ -231,10 +230,11 @@ public class PermissionAspect {
                     if (projectId == null) return false;
                     return checkProjectManagerPermission(projectId, userId);
 
-                // 查看列表不需要具体项目权限
+                // 查看自己的项目列表不需要具体项目权限
                 case PROJECT_VIEW:
-                    if (projectId == null) return true;
-                    return checkNomalMemberPermission(projectId, userId);
+                    return true;
+                case PROJECT_VIEW_ALL:
+                    return checkAdminPermission(userId);
 
                 // 项目经理可以管理项目成员
                 case MEMBER_ADD:
@@ -309,7 +309,7 @@ public class PermissionAspect {
      * 验证是否是任务负责人（普通成员）
      */
     private boolean checkTaskLeaderPermission(Integer taskId, Integer userId) {
-        return tasksMemberMapper.getMemberByTaskIdAndUserId(taskId, userId).getTaskRole().equals("ASSIGNEE");
+        return tasksMapper.getTaskById(taskId).getAssigneeId().equals(userId);
     }
 
     /**

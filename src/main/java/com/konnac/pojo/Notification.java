@@ -16,6 +16,7 @@ public class Notification {
     private Integer relatedId;       // 关联ID
     private Boolean isRead;          // 是否已读
     private LocalDateTime createdAt; // 创建时间
+    private Boolean isDeleted; // 状态
 
     @Getter
     public enum NotificationType {
@@ -36,4 +37,5 @@ public class Notification {
             this.description = description;
         }
     }
+
 }

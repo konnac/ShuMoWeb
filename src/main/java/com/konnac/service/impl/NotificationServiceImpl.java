@@ -292,12 +292,41 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 批量删除通知
      */
-    @Transactional(rollbackFor = Exception.class, timeout = 30)
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            rollbackFor = Exception.class,
+            timeout = 30)
     @Override
-    public void deleteBatch(List<Integer> notificationIds, Integer userId) {
-        log.debug("正在批量删除通知: notificationIds={}, userId={}", notificationIds, userId);
-        notificationMapper.deleteBatch(notificationIds, userId);
-        log.info("批量删除通知成功");
+    public BatchResult deleteBatch(List<Integer> notificationIds, Integer userId) {
+        if(notificationIds == null || notificationIds.isEmpty()){
+            log.warn("批量删除通知失败: notificationIds为空");
+            throw new BusinessException("通知列表不能为空");
+        }
+
+        // 包装批量结果
+        BatchResult batchResult = new BatchResult();
+        batchResult.setTotal(notificationIds.size());
+
+        // 批量删除
+        for(Integer notificationId : notificationIds){
+            try{
+                notificationMapper.delete(notificationId, userId);
+                batchResult.addSuccess(notificationId);
+            } catch (Exception e){
+                batchResult.addFailure(notificationId, e.getMessage());
+                log.warn("批量删除通知失败: {}", e.getMessage(), e);
+            }
+        }
+
+        // 如果全部失败，抛出异常
+        if (batchResult.isAllFailure()) {
+            throw new BusinessException("所有成员添加失败: " + batchResult.getFailureDetails());
+        }
+
+        log.info("批量添加项目成员结果: total={}, successCount={}, failureCount={}", batchResult.getTotal(), batchResult.getSuccessCount(), batchResult.getFailureCount());
+
+        return batchResult;
+
     }
 
     /**

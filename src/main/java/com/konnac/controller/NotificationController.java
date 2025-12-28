@@ -186,8 +186,17 @@ public class NotificationController {
     @DeleteMapping("/batch")
     public Result deleteBatch(@RequestBody List<Integer> notificationIds, @RequestParam Integer userId) {
         log.info("批量删除通知: notificationIds={}, userId={}", notificationIds, userId);
-        notificationService.deleteBatch(notificationIds, userId);
-        return Result.success();
+        BatchResult batchResult = notificationService.deleteBatch(notificationIds, userId);
+
+        // 包装为统一的Result返回给前端
+        if (batchResult.isAllSuccess()) {
+            return Result.success("全部添加成功", batchResult);
+        } else if (batchResult.getFailureCount() > 0) {
+            // 部分成功，使用特定状态码
+            return Result.error(201, "部分添加成功", batchResult);
+        } else {
+            return Result.error("添加失败", batchResult);
+        }
     }
 
     /**

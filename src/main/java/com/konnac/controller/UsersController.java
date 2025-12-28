@@ -4,6 +4,7 @@ package com.konnac.controller;
  * 员工管理(users表)
  */
 
+import com.konnac.annotation.RequirePermission;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Result;
 import com.konnac.pojo.User;

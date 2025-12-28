@@ -28,6 +28,7 @@ public class LoginController {
             Map<String, Object> claims = new HashMap<>();
             claims.put("id", u.getId());
             claims.put("username", u.getUsername());
+            claims.put("role", u.getRole().toString());
 
             //jwt包含了用户信息
             String jwt = JwtUtils.generateJwt(claims);

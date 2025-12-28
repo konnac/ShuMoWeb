@@ -41,10 +41,6 @@ public interface NotificationMapper {
 
 
 //============================删除功能============================
-    /**
-     * 批量删除通知
-     */
-    void deleteBatch(List<Integer> notificationIds, Integer userId);
 
     /**
      * 批量删除已读通知
@@ -55,6 +51,11 @@ public interface NotificationMapper {
      * 批量删除某时间前的通知
      */
     void deleteByUserIdAndBeforeDate(Integer userId, LocalDateTime beforeDate);
+
+    /**
+     * 软删除通知
+     */
+    void delete(Integer notificationId, Integer userId);
 
 //============================查询功能============================
     /**
@@ -68,7 +69,5 @@ public interface NotificationMapper {
                             Boolean isRead,
                             LocalDate begin,
                             LocalDate end);
-
-
 
 }

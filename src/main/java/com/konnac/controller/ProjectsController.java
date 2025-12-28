@@ -67,7 +67,7 @@ public class ProjectsController {
 
 
     /**
-     *  分页查询项目
+     *  分页查询项目(自己参与的)
      */
     @RequestMapping
     public Result page(@RequestParam(defaultValue = "1") Integer page,

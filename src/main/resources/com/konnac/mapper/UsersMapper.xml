@@ -91,14 +91,13 @@
             <if test="username != null and username.trim() != ''">
                 AND username LIKE CONCAT('%', #{username}, '%')
             </if>
-            <!-- 修复：real_name 参数名应为 realName -->
             <if test="realName != null and realName.trim() != ''">
                 AND real_name LIKE CONCAT('%', #{realName}, '%')
             </if>
             <if test="role != null">
                 AND role = #{role}
             </if>
-            <!-- 优化创建时间范围查询 -->
+            <!-- 时间范围查询 -->
             <choose>
                 <when test="begin != null and end != null">
                     AND created_time BETWEEN #{begin} AND #{end}

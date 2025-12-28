@@ -19,6 +19,7 @@ public class User {
     private UserRole role; // ADMIN, PROJECT_MANAGER, EMPLOYEE
     private String email; //要做邮箱验证
     private String department; // 部门
+    private Integer departmentId; //部门id
     private String phone; // 电话
     private LocalDateTime createTime; //创建时间
     private LocalDateTime updateTime; //修改时间

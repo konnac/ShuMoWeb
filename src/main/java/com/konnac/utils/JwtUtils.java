@@ -8,8 +8,8 @@ import java.util.Date;
 import java.util.Map;
 
 public class JwtUtils {
-    private static String signKey = "itheima";
-    private static Long expire = 604800000L;
+    private static final String signKey = "u5k8jPq3RtXwL9zFbV2nM7cA1dG4hJ6yT0zQp9oL3iK=";
+    private static final Long expire = 604800000L;
 
     /**
      * 生成JWT令牌

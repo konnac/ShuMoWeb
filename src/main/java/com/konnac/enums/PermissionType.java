@@ -11,7 +11,8 @@ public enum PermissionType {
     PROJECT_ADD("添加项目"),
     PROJECT_UPDATE("修改项目"),
     PROJECT_DELETE("删除项目"),
-    PROJECT_VIEW("查看项目"),
+    PROJECT_VIEW("查看自己参与项目"),
+    PROJECT_VIEW_ALL("查看所有项目(管理员)"),
     PROJECT_EXPORT("导出项目"),
 
     // 项目成员权限

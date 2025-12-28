@@ -3,6 +3,7 @@ package com.konnac.service.impl;
 
 import com.github.pagehelper.PageInfo;
 import com.konnac.annotation.RequirePermission;
+import com.konnac.context.UserContext;
 import com.konnac.enums.PermissionType;
 import com.konnac.exception.BusinessException;
 import com.konnac.mapper.ProjectsMapper;
@@ -174,6 +175,11 @@ public class ProjectsServiceImpl implements ProjectsService {
                          LocalDate end,
                          Integer currentUserId) throws BusinessException {
         log.debug("分页查询项目，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={}, currentUserId={}", page, pageSize, id, name, description, priority, status, begin, end, currentUserId);
+        if(User.UserRole.ADMIN == UserContext.getCurrentUser().getRole()){
+            PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMapper.listAll(id, name, description, priority, status, begin, end));
+            log.info("分页查询项目成功，结果：{}", pageBean);
+            return new PageBean(pageBean.getTotal(), pageBean.getList());
+        }
         PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMapper.list(id, name, description, priority, status, begin, end, currentUserId));
         log.info("分页查询项目成功，结果：{}", pageBean);
         return new PageBean(pageBean.getTotal(), pageBean.getList());

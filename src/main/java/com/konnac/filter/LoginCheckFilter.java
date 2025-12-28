@@ -94,7 +94,15 @@ public class LoginCheckFilter implements Filter {
                 throw new Exception("无效的token");
             }
 
-            // 查询用户信息（可以根据需要决定是否查询完整信息）
+            // 从token中获取用户角色
+            String userRole = JwtUtils.getUserRoleFromToken(jwt);
+            if (userRole == null){
+                log.warn("Token中未找到用户角色");
+                throw new Exception("无效的token");
+            }
+
+
+            // 查询用户信息（根据需要决定是否查询完整信息）
             User user = usersMapper.getUserById(userId);
             if (user == null) {
                 log.warn("用户不存在: userId={}", userId);
@@ -103,7 +111,7 @@ public class LoginCheckFilter implements Filter {
 
             // 设置用户上下文
             UserContext.setCurrentUser(user);
-            log.debug("设置用户上下文: userId={}, username={}", userId, user.getUsername());
+            log.debug("设置用户上下文: userId={}, username={}, userRole={}", userId, user.getUsername(), userRole);
 
         } catch (Exception e) {
             log.info("令牌验证失败: {}", e.getMessage());

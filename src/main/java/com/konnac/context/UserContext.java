@@ -1,12 +1,15 @@
 package com.konnac.context;
 
 import com.konnac.pojo.User;
+import lombok.Data;
 
 public class UserContext {
     // 当前用户id
     private static ThreadLocal<Integer> currentUserId = new ThreadLocal<>();
     // 当前用户
     private static ThreadLocal<User> currentUser = new ThreadLocal<>();
+    // 当前用户角色
+    private static ThreadLocal<String> currentUserRole = new ThreadLocal<>();
 
     /**
      * 设置当前用户ID
@@ -20,6 +23,20 @@ public class UserContext {
      */
     public static Integer getCurrentUserId() {
         return currentUserId.get();
+    }
+
+    /**
+     * 获取当前用户角色
+     */
+    public static String getCurrentUserRole() {
+        return currentUserRole.get();
+    }
+
+    /**
+     * 设置当前用户角色
+     */
+    public static void setCurrentUserRole(String role) {
+        currentUserRole.set(role);
     }
 
     /**

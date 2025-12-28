@@ -51,7 +51,7 @@
         WHERE id = #{id}
     </update>
 
-    <!-- 分页查询（修改为查询我参与的项目） -->
+    <!-- 分页查询（查询我参与的项目） -->
     <select id="list" resultType="com.konnac.pojo.Project">
         <include refid="commonSelect"></include>
         LEFT JOIN management.project_members pm ON p.id = pm.project_id
@@ -96,5 +96,41 @@
         GROUP BY p.id
         order by p.created_time desc
     </select>
+<!--分页条件查询所有项目-->
+    <select id="listAll" resultType="com.konnac.pojo.Project">
+        <include refid="commonSelect"/>
+        <where>
+            ORDER BY created_time DESC
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="name != null and name.trim() != ''">
+                and name like concat('%', #{name}, '%')
+            </if>
+            <if test="description != null and description.trim() != ''">
+                and description like concat('%', #{description}, '%')
+            </if>
+            <!-- 项目起止时间范围查询 -->
+            <if test="startDate != null">
+                and start_date >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                and #{endDate} >= end_date
+            </if>
+
+            <if test="priority != null">
+                and priority = #{priority}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+
+            <!-- 创建时间范围查询 -->
+            <if test="begin != null and end != null">
+                and created_time between #{begin} and #{end}
+            </if>
+        </where>
+    </select>
+
 
 </mapper>

@@ -35,7 +35,13 @@ public interface ProjectsMapper {
     Project getProjectByName(String name);
 
     /**
-     *  分页查询项目
+     *  分页查询项目(查询我参与的项目)
      */
     List<Project> list(Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end, Integer currentUserId);
+
+    /**
+     *  分页查询项目(查询所有项目)
+     */
+    List<Project> listAll(Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end);
+
 }
