@@ -13,6 +13,7 @@ import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Project;
 import com.konnac.pojo.User;
 import com.konnac.service.ProjectsService;
+import com.konnac.utils.AuthUtils;
 import com.konnac.utils.PageHelperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +82,7 @@ public class ProjectsServiceImpl implements ProjectsService {
                     throw new BusinessException("项目id:" + id + ",项目下有未完成的任务，不能删除");
                 }
                 //  3.删除项目
-                project.setStatus(Project.ProjectStatus.CANCELED);
+                project.setStatus(Project.ProjectStatus.TERMINATED);
                 project.setUpdateTime(LocalDateTime.now());
                 projectsMapper.updateProject(project);
 
@@ -110,7 +111,7 @@ public class ProjectsServiceImpl implements ProjectsService {
             }
 
             // 3.验证项目状态：已取消的项目不允许修改
-            if (Project.ProjectStatus.CANCELED.equals(existingProject.getStatus())) {
+            if (Project.ProjectStatus.TERMINATED.equals(existingProject.getStatus())) {
                 throw new BusinessException("项目已取消，不允许修改");
             }
 
@@ -161,8 +162,9 @@ public class ProjectsServiceImpl implements ProjectsService {
     }
 
     /**
-     *分页查询项目
+     * 分页查询项目
      */
+    @RequirePermission(value = PermissionType.PROJECT_VIEW, checkProject = false)
     @Override
     public PageBean page(Integer page,
                          Integer pageSize,
@@ -174,13 +176,41 @@ public class ProjectsServiceImpl implements ProjectsService {
                          LocalDate begin,
                          LocalDate end,
                          Integer currentUserId) throws BusinessException {
-        log.debug("分页查询项目，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={}, currentUserId={}", page, pageSize, id, name, description, priority, status, begin, end, currentUserId);
-        if(User.UserRole.ADMIN == UserContext.getCurrentUser().getRole()){
-            PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMapper.listAll(id, name, description, priority, status, begin, end));
+        log.debug("分页查询项目，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={}, currentUserId={}",
+                page, pageSize, id, name, description, priority, status, begin, end, currentUserId);
+
+        User currentUser = AuthUtils.getCurrentUser();
+
+        if(User.UserRole.ADMIN == currentUser.getRole()){
+            // 如果是管理员，查询所有项目
+            PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize,
+                    () -> projectsMapper.listAll(
+                            id,
+                            name,
+                            description,
+                            priority,
+                            status,
+                            begin,  // 注意：这里需要与 Mapper 参数名匹配
+                            end     // 注意：这里需要与 Mapper 参数名匹配
+                    )
+            );
             log.info("分页查询项目成功，结果：{}", pageBean);
             return new PageBean(pageBean.getTotal(), pageBean.getList());
         }
-        PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMapper.list(id, name, description, priority, status, begin, end, currentUserId));
+
+        // 如果不是管理员，只查询自己参与的项目
+        PageInfo<Project> pageBean = PageHelperUtils.safePageQuery(page, pageSize,
+                () -> projectsMapper.list(
+                        id,
+                        name,
+                        description,
+                        priority,
+                        status,
+                        begin,  // 注意：这里需要与 Mapper 参数名匹配
+                        end,    // 注意：这里需要与 Mapper 参数名匹配
+                        currentUserId
+                )
+        );
         log.info("分页查询项目成功，结果：{}", pageBean);
         return new PageBean(pageBean.getTotal(), pageBean.getList());
     }

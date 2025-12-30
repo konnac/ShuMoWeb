@@ -71,7 +71,12 @@ public class LoginCheckFilter implements Filter {
         }
 
         // 4. 获取请求头中的令牌（token）
-        String jwt = req.getHeader("token");
+        String jwt = req.getHeader("Authorization");
+        
+        // 处理Bearer前缀
+        if (StringUtils.hasLength(jwt) && jwt.startsWith("Bearer ")) {
+            jwt = jwt.substring(7);
+        }
 
         // 5. 判断令牌是否存在，如果不存在，返回错误结果（未登录）
         if (!StringUtils.hasLength(jwt)){
@@ -121,15 +126,9 @@ public class LoginCheckFilter implements Filter {
             return;
         }
 
-        try {
-            // 7. 放行
-            log.info("令牌合法，放行");
-            filterChain.doFilter(servletRequest, servletResponse);
-        } finally {
-            // 8. 清理ThreadLocal，防止内存泄漏
-            UserContext.clear();
-            log.debug("清理用户上下文");
-        }
+        // 7. 放行
+        log.info("令牌合法，放行");
+        filterChain.doFilter(servletRequest, servletResponse);
     }
 
     private boolean checkWhiteList(String url) {

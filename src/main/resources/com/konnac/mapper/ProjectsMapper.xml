@@ -18,9 +18,6 @@
                 #{endDate}, #{priority}, #{status}, #{createdTime}, #{updateTime})
     </insert>
 
-
-
-
     <!-- 修改项目信息 -->
     <update id="updateProject">
         UPDATE projects
@@ -53,54 +50,55 @@
 
     <!-- 分页查询（查询我参与的项目） -->
     <select id="list" resultType="com.konnac.pojo.Project">
-        <include refid="commonSelect"></include>
-        LEFT JOIN management.project_members pm ON p.id = pm.project_id
+        <include refid="commonSelect"/>
+        LEFT JOIN management.project_members pm ON projects.id = pm.project_id
         <where>
             <!-- 用户参与条件：用户是项目经理 或者 是项目成员 -->
             AND (
-            p.manager_id = #{currentUserId}
+            projects.manager_id = #{currentUserId}
             OR (pm.user_id = #{currentUserId} AND pm.status = 'ACTIVE')
             )
 
             <if test="id != null">
-                and p.id = #{id}
+                and projects.id = #{id}
             </if>
             <if test="name != null and name.trim() != ''">
-                and p.name like concat('%', #{name}, '%')
+                and projects.name like concat('%', #{name}, '%')
             </if>
             <if test="description != null and description.trim() != ''">
-                and p.description like concat('%', #{description}, '%')
+                and projects.description like concat('%', #{description}, '%')
             </if>
-            <!-- 注意：这里移除了managerId的单独判断，因为已经在上面条件中包含了 -->
 
             <!-- 项目起止时间范围查询 -->
-            <if test="startDate != null">
-                and p.start_date >= #{startDate}
+            <if test="begin != null">
+                and projects.start_date >= #{begin}
             </if>
-            <if test="endDate != null">
-                and #{endDate} >= p.end_date
+            <if test="end != null">
+                and #{end} >= projects.end_date
             </if>
 
             <if test="priority != null">
-                and p.priority = #{priority}
+                and projects.priority = #{priority}
             </if>
             <if test="status != null">
-                and p.status = #{status}
+                and projects.status = #{status}
             </if>
 
-            <!-- 创建时间范围查询 -->
-            <if test="begin != null and end != null">
-                and p.created_time between #{begin} and #{end}
+            <!-- 创建时间范围查询 - 如果不需要，可以删除这部分 -->
+            <!--
+            <if test="createdBegin != null and createdEnd != null">
+                and projects.created_time between #{createdBegin} and #{createdEnd}
             </if>
+            -->
         </where>
-        GROUP BY p.id
-        order by p.created_time desc
+        GROUP BY projects.id
+        order by projects.created_time desc
     </select>
-<!--分页条件查询所有项目-->
+
+    <!-- 分页条件查询所有项目 -->
     <select id="listAll" resultType="com.konnac.pojo.Project">
         <include refid="commonSelect"/>
         <where>
-            ORDER BY created_time DESC
             <if test="id != null">
                 and id = #{id}
             </if>
@@ -111,11 +109,11 @@
                 and description like concat('%', #{description}, '%')
             </if>
             <!-- 项目起止时间范围查询 -->
-            <if test="startDate != null">
-                and start_date >= #{startDate}
+            <if test="begin != null">
+                and start_date >= #{begin}
             </if>
-            <if test="endDate != null">
-                and #{endDate} >= end_date
+            <if test="end != null">
+                and #{end} >= end_date
             </if>
 
             <if test="priority != null">
@@ -125,12 +123,13 @@
                 and status = #{status}
             </if>
 
-            <!-- 创建时间范围查询 -->
-            <if test="begin != null and end != null">
-                and created_time between #{begin} and #{end}
+            <!-- 创建时间范围查询 - 如果不需要，可以删除这部分 -->
+            <!--
+            <if test="createdBegin != null and createdEnd != null">
+                and created_time between #{createdBegin} and #{createdEnd}
             </if>
+            -->
         </where>
+        ORDER BY created_time DESC
     </select>
-
-
 </mapper>

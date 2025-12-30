@@ -8,14 +8,19 @@ import com.konnac.mapper.*;
 import com.konnac.pojo.ProjectMember;
 import com.konnac.pojo.User;
 import com.konnac.utils.AuthUtils;
+import com.konnac.utils.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
 
@@ -44,13 +49,42 @@ public class PermissionAspect {
 
     @Before("@annotation(requirePermission)")
     public void checkPermission(JoinPoint joinPoint, RequirePermission requirePermission) {
-        // 1. 从UserContext获取当前用户
-        User currentUser = UserContext.getCurrentUser();
-        if (currentUser == null) {
+        // 1. 从请求头获取token并解析
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            throw new BusinessException("请求属性获取失败");
+        }
+        HttpServletRequest request = attributes.getRequest();
+        String authorization = request.getHeader("Authorization");
+        
+        // 处理Bearer前缀
+        String token = null;
+        if (StringUtils.hasLength(authorization) && authorization.startsWith("Bearer ")) {
+            token = authorization.substring(7);
+        }
+        
+        // 检查token是否存在
+        if (!StringUtils.hasLength(token)) {
             throw new BusinessException("用户未登录");
         }
+        
+        // 解析token获取用户ID
+        Integer userId = JwtUtils.getUserIdFromToken(token);
+        if (userId == null) {
+            throw new BusinessException("用户未登录");
+        }
+        
+        // 从数据库获取用户信息
+        User currentUser = usersMapper.getUserById(userId);
+        if (currentUser == null) {
+            throw new BusinessException("用户不存在");
+        }
+        
+        // 设置UserContext
+        UserContext.setCurrentUser(currentUser);
+        UserContext.setCurrentUserId(userId);
+        UserContext.setCurrentUserRole(currentUser.getRole().toString());
 
-        Integer userId = currentUser.getId();
         Integer projectId = null;
         Integer taskId = null;
 

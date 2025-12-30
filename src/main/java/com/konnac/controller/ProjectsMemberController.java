@@ -79,7 +79,7 @@ public class ProjectsMemberController {
     /**
      * 分页查询项目成员
      */
-    @RequestMapping("/{id}/assignable")
+    @RequestMapping
     public Result page(@RequestParam(defaultValue = "1") Integer page,
                        @RequestParam(defaultValue = "10") Integer pageSize,
                        @PathVariable Integer projectId,

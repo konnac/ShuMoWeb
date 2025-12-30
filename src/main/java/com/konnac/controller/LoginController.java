@@ -14,12 +14,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-@RestController("/login")
+@RestController
 public class LoginController {
     @Autowired
     private LoginService loginService;
 
-    @PostMapping
+    @PostMapping("/login")
     public Result login(@RequestBody User user){
         log.info("用户登录，用户名：{}", user.getUsername());
         User u = loginService.login(user);

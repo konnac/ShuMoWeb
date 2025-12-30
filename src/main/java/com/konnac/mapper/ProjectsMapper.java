@@ -2,6 +2,7 @@ package com.konnac.mapper;
 
 import com.konnac.pojo.Project;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDate;
@@ -37,11 +38,27 @@ public interface ProjectsMapper {
     /**
      *  分页查询项目(查询我参与的项目)
      */
-    List<Project> list(Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end, Integer currentUserId);
+    List<Project> list(
+            @Param("id") Integer id,
+            @Param("name") String name,
+            @Param("description") String description,
+            @Param("priority") Project.Priority priority,
+            @Param("status") Project.ProjectStatus status,
+            @Param("begin") LocalDate begin,  // 项目开始时间
+            @Param("end") LocalDate end,      // 项目结束时间
+            @Param("currentUserId") Integer currentUserId
+    );
 
     /**
      *  分页查询项目(查询所有项目)
      */
-    List<Project> listAll(Integer id, String name, String description, Project.Priority priority, Project.ProjectStatus status, LocalDate begin, LocalDate end);
-
+    List<Project> listAll(
+            @Param("id") Integer id,
+            @Param("name") String name,
+            @Param("description") String description,
+            @Param("priority") Project.Priority priority,
+            @Param("status") Project.ProjectStatus status,
+            @Param("begin") LocalDate begin,  // 项目开始时间
+            @Param("end") LocalDate end       // 项目结束时间
+    );
 }

@@ -44,7 +44,7 @@ public class JwtUtils {
     public static Integer getUserIdFromToken(String token) {
         try {
             Claims claims = parseJWT(token);
-            Object userIdObj = claims.get("userId");
+            Object userIdObj = claims.get("id");
             if (userIdObj instanceof Integer) {
                 return (Integer) userIdObj;
             } else if (userIdObj instanceof Number) {

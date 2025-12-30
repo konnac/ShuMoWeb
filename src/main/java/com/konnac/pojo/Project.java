@@ -72,11 +72,10 @@ public class Project {
 
     @Getter
     public enum ProjectStatus {
-        NOT_STARTED("未开始"),
         IN_PROGRESS("进行中"),
         COMPLETED("已完成"),
-        CANCELED("已取消");
-//        DELETED("已删除");
+        DELAYED("已延期"),
+        TERMINATED("已取消");
 
         private final String description;
 

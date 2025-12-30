@@ -1,3 +1,7 @@
+#服务器配置
+server:
+  port: 8080  # 修改端口为8081
+
 spring:
   #数据库连接信息
   datasource:
@@ -18,11 +22,11 @@ document:
 
 
 mybatis:
-  type-handlers-package: com.konnac.handler
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: true
     default-enum-type-handler: org.apache.ibatis.type.EnumTypeHandler
+    jdbc-type-for-null: 'null'
 #spring事务管理日志 作用: 配置spring事务管理日志
 logging:
   level:

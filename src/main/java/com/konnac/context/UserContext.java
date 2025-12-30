@@ -74,5 +74,6 @@ public class UserContext {
     public static void clear() {
         currentUserId.remove();
         currentUser.remove();
+        currentUserRole.remove();
     }
 }

@@ -29,7 +29,7 @@ public class UsersServiceImpl implements UsersService {
     @RequirePermission(value = PermissionType.USER_ADD)
     @Override
     public void addUser(User user) {
-        user.setCreateTime(LocalDateTime.now());
+        user.setCreatedTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
         UsersMapper.addUser(user);
     }
@@ -77,7 +77,7 @@ public class UsersServiceImpl implements UsersService {
     /**
      * 分页查询
      */
-    @RequirePermission(value = PermissionType.USER_VIEW_DETAIL)
+    @RequirePermission(value = PermissionType.USER_VIEW_DETAIL, checkProject = false)
     @Override
     public PageBean page(Integer page,
                          Integer pageSize,

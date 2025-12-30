@@ -47,9 +47,9 @@ public class ProjectsController {
      *  修改项目
      */
     @PutMapping
-    public Result updateProject( @PathVariable Integer operatorId, @RequestBody Project project) {
+    public Result updateProject(Integer operatorId, @RequestBody Project project) {
         log.info("修改项目， 项目信息：{}, 操作人id: {}", project, operatorId);
-        projectsService.updateProject(project, project.getManagerId());
+        projectsService.updateProject(project, operatorId);
         return Result.success();
     }
 
@@ -67,7 +67,7 @@ public class ProjectsController {
 
 
     /**
-     *  分页查询项目(自己参与的)
+     *  分页查询项目
      */
     @RequestMapping
     public Result page(@RequestParam(defaultValue = "1") Integer page,

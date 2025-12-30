@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -21,7 +22,7 @@ public class User {
     private String department; // 部门
     private Integer departmentId; //部门id
     private String phone; // 电话
-    private LocalDateTime createTime; //创建时间
+    private LocalDateTime createdTime; //创建时间
     private LocalDateTime updateTime; //修改时间
 
     @Getter

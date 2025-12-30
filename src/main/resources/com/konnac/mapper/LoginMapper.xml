@@ -3,8 +3,24 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.konnac.mapper.LoginMapper">
-<!--验证账号密码-->
-    <select id="getByUserNameAndPassword" resultType="com.konnac.pojo.User">
+    <!--定义结果映射-->    
+    <resultMap id="UserResultMap" type="com.konnac.pojo.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="realName" column="real_name"/>
+        <result property="password" column="password"/>
+        <result property="avatar" column="avatar"/>
+        <result property="role" column="role" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="email" column="email"/>
+        <result property="department" column="department"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="phone" column="phone"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    
+    <!--验证账号密码-->
+    <select id="getByUserNameAndPassword" resultMap="UserResultMap">
         select *
         from users
         where username = #{username}

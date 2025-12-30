@@ -5,7 +5,7 @@
 <mapper namespace="com.konnac.mapper.UsersMapper">
 
     <sql id="commonSelect">
-        SELECT id, username, password, role, real_name, email, created_time, update_time
+        SELECT id, username, password, role, real_name, email, department, department_id, phone, avatar, created_time, update_time
         FROM users
     </sql>
 
@@ -14,7 +14,7 @@
         INSERT INTO users (
             username, password, role, real_name, email, created_time, update_time
         ) VALUES (
-                     #{username}, #{password}, #{role}, #{realName}, #{email}, #{createTime}, #{updateTime}
+                     #{username}, #{password}, #{role}, #{realName}, #{email}, #{createdTime}, #{updateTime}
                  )
     </insert>
 
@@ -111,7 +111,7 @@
             </choose>
         </where>
         <!-- 添加排序，提高查询可预测性 -->
-        ORDER BY created_time DESC
+        ORDER BY id
     </select>
 
     <!-- 新增：根据用户名查询用户（用于登录校验等场景） -->
