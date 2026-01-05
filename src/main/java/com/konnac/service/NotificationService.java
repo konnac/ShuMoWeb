@@ -4,6 +4,7 @@ import com.konnac.pojo.BatchResult;
 import com.konnac.pojo.Notification;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.ProjectRole;
+import com.konnac.pojo.TaskRole;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
@@ -77,6 +78,11 @@ public interface NotificationService {
                   @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate begin,
                   @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end);
 
+    /**
+     * 根据ID获取通知详情
+     */
+    Notification getById(Integer notificationId);
+
 
 //=============删除通知=============
 
@@ -110,6 +116,8 @@ public interface NotificationService {
      * 构建项目成员角色变更通知
      */
     void sendUpdateMemberRoleNotification(Integer projectId, Integer userId, Integer operatorId, ProjectRole newRole);
+
+    void sendUpdateTaskMemberRoleNotification(Integer taskId, Integer userId, Integer operatorId, TaskRole newRole);
 
     /**
      * 构建任务分配通知

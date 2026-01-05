@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TaskMember {
+    private Integer id; // 成员ID
     private Integer taskId; // 任务ID
     private Integer userId; // 用户ID
     private String username; // 用户名

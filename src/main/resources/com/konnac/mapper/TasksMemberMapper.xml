@@ -14,7 +14,7 @@
     <!--新增项目成员-->
     <insert id="addTaskMember">
         insert into task_members (task_id, user_id, task_role, join_by, status)
-        values (#{projectId}, #{userId}, #{projectRole}, #{joinBy}, #{status})
+        values (#{taskId}, #{userId}, #{taskRole}, #{joinBy}, #{status})
     </insert>
     <!--根据项目id和用户id获取项目内成员-->
     <select id="getMemberByTaskIdAndUserId" resultType="com.konnac.pojo.TaskMember">
@@ -23,7 +23,7 @@
         where task_id = #{taskId}
           and user_id = #{userId}
     </select>
-    <!--软删除项目成员-->
+    <!--软删除任务成员-->
     <update id="updateTaskMember">
         UPDATE task_members
         <set>
@@ -39,8 +39,8 @@
             <if test="joinDate != null">
                 join_date = #{joinDate},
             </if>
-            <if test="updatedTime != null">
-                updated_time = #{updatedTime}
+            <if test="updateTime != null">
+                updated_time = #{updateTime}
             </if>
         </set>
         WHERE id = #{id}
@@ -54,28 +54,37 @@
     </select>
     <!--分页查询-->
     <select id="list" resultType="com.konnac.pojo.TaskMember">
-        select *
-        from task_members
+        select tm.*,
+        u.username,
+        u.real_name as realName,
+        u.email,
+        u.phone,
+        u.avatar,
+        u.department,
+        u.role as userRole,
+        u2.real_name as joinByName
+        from task_members tm
+        left join users u on tm.user_id = u.id
+        left join users u2 on tm.join_by = u2.id
         <where>
             <if test="taskId != null">
-                and task_id = #{taskId}
+                and tm.task_id = #{taskId}
             </if>
+            and tm.status = 'ACTIVE'
             <if test="name != null and name != ''">
-                and username like concat('%', #{name}, '%')
+                and u.username like concat('%', #{name}, '%')
             </if>
             <if test="realName != null and realName != ''">
-                and real_name like concat('%', #{realName}, '%')
+                and u.real_name like concat('%', #{realName}, '%')
             </if>
             <if test="taskRole != null and taskRole != ''">
-                and task_role like concat('%', #{taskRole}, '%')
+                and tm.task_role like concat('%', #{taskRole}, '%')
             </if>
             <if test="department != null and department != ''">
-                and department like concat('%', #{department}, '%')
+                and u.department like concat('%', #{department}, '%')
             </if>
-            Order by id desc
         </where>
-
-
+        order by tm.task_id desc
     </select>
     <!--根据id获取成员-->
     <select id="findByUserId" resultType="com.konnac.pojo.TaskMember">
@@ -83,11 +92,11 @@
         from task_members
         where user_id = #{userId}
     </select>
-    <!--根据项目id获取项目成员id列表-->
+    <!--根据任务id获取任务成员id列表-->
     <select id="getTaskMembersIds" resultType="java.lang.Integer">
         select user_id
         from task_members
-        where task_id = #{projectId}
+        where task_id = #{taskId}
           and status = 'ACTIVE'
     </select>
 </mapper>

@@ -13,8 +13,8 @@
     </select>
 <!--新增项目成员-->
     <insert id="addProjectMember">
-        insert into project_members (project_id, user_id, project_role, join_by, status)
-        values (#{projectId}, #{userId}, #{projectRole}, #{joinBy}, #{status})
+        insert into project_members (project_id, user_id, project_role, join_by, status, join_date)
+        values (#{projectId}, #{userId}, #{projectRole}, #{joinBy}, #{status}, #{joinDate})
     </insert>
 <!--根据项目id和用户id获取项目内成员-->
     <select id="getMemberByProjectIdAndUserId" resultType="com.konnac.pojo.ProjectMember">
@@ -25,7 +25,7 @@
     </select>
 <!--软删除项目成员-->
     <update id="updateProjectMember">
-        UPDATE project_member
+        UPDATE project_members
         <set>
             <if test="projectRole != null and projectRole != ''">
                 project_role = #{projectRole},
@@ -39,8 +39,8 @@
             <if test="joinDate != null">
                 join_date = #{joinDate},
             </if>
-            <if test="updatedTime != null">
-                updated_time = #{updatedTime}
+            <if test="updateTime != null">
+                updated_time = #{updateTime}
             </if>
         </set>
         WHERE id = #{id}
@@ -52,30 +52,35 @@
         where project_id = #{projectId}
         and status = 'ACTIVE'
     </select>
-<!--分页查询-->
     <select id="list" resultType="com.konnac.pojo.ProjectMember">
-        select *
-        from project_members
+        select pm.*,
+        u.username,
+        u.real_name as realName,
+        u.email,
+        u.phone,
+        u.avatar,
+        u.department
+        from project_members pm
+        left join users u on pm.user_id = u.id
         <where>
             <if test="projectId != null">
-                and project_id = #{projectId}
+                and pm.project_id = #{projectId}
             </if>
             <if test="name != null and name != ''">
-                and username like concat('%', #{name}, '%')
+                and u.username like concat('%', #{name}, '%')
             </if>
             <if test="realName != null and realName != ''">
-                and real_name like concat('%', #{realName}, '%')
+                and u.real_name like concat('%', #{realName}, '%')
             </if>
             <if test="userRole != null and userRole != ''">
-                and user_role like concat('%', #{userRole}, '%')
+                and pm.project_role like concat('%', #{userRole}, '%')
             </if>
             <if test="department != null and department != ''">
-                and department like concat('%', #{department}, '%')
+                and u.department like concat('%', #{department}, '%')
             </if>
-            Order by id desc
+            and pm.status = 'ACTIVE'
         </where>
-
-
+        Order by pm.id desc
     </select>
 <!--根据id获取成员-->
     <select id="findByUserId" resultType="com.konnac.pojo.ProjectMember">

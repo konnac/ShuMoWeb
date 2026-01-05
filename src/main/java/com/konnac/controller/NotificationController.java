@@ -27,8 +27,9 @@ public class NotificationController {
      * 发送普通公告(管理员和项目经理)
      */
     @PostMapping("/send/nor-noti")
-    @RequirePermission(PermissionType.NOTIFICATION_SEND)
-    public Result sendNorNotification(List<Integer> userIds, Notification notification) {
+    @RequirePermission(value = PermissionType.NOTIFICATION_SEND, checkProject = false, checkTask = false)
+    public Result sendNorNotification(@RequestParam List<Integer> userIds, @RequestBody Notification notification) {
+        log.info("发送普通公告，userIds={}, notification={}", userIds, notification);
         // 调用Service，得到批量操作结果
         BatchResult batchResult = notificationService.sendCustomNotification(userIds, notification);
         // 包装为统一的Result返回给前端
@@ -46,8 +47,9 @@ public class NotificationController {
      * 发送系统公告(管理员)
      */
     @PostMapping("/send/sys-noti")
-    @RequirePermission(PermissionType.NOTIFACATION_SEND_ADMIN)
-    public Result sendSysNotification(List<Integer> userIds, Notification notification) {
+    @RequirePermission(value = PermissionType.NOTIFACATION_SEND_ADMIN, checkProject = false, checkTask = false)
+    public Result sendSysNotification(@RequestParam List<Integer> userIds, @RequestBody Notification notification) {
+        log.info("发送系统公告，userIds={}, notification={}", userIds, notification);
         // 调用Service，得到批量操作结果
         BatchResult batchResult = notificationService.sendCustomNotification(userIds, notification);
         // 包装为统一的Result返回给前端
@@ -76,7 +78,7 @@ public class NotificationController {
     /**
      * 批量发送通知给多个用户
      */
-    @PostMapping("/send/Batch")
+    @PostMapping("/send/batch")
     public Result sendBatchNotificationToUsers(
             @RequestParam List<Integer> userIds,
             String title,
@@ -137,7 +139,7 @@ public class NotificationController {
      * 批量已读
      */
     @PostMapping("/read-batch")
-    public Result markAsReadBatch(@RequestParam List<Integer> notificationIds, @RequestParam Integer userId) {
+    public Result markAsReadBatch(@RequestBody List<Integer> notificationIds, @RequestParam Integer userId) {
         log.info("批量已读，参数：notificationIds={}, userId={}", notificationIds, userId);
         notificationService.markAsReadBatch(notificationIds, userId);
         return Result.success();
@@ -178,22 +180,32 @@ public class NotificationController {
         return Result.success(pageBean);
     }
 
+    /**
+     * 获取通知详情
+     */
+    @GetMapping("/detail/{id}")
+    public Result getById(@PathVariable Integer id) {
+        log.info("获取通知详情: notificationId={}", id);
+        Notification notification = notificationService.getById(id);
+        return Result.success(notification);
+    }
+
     //=============删除通知=============
 
     /**
      * 批量删除通知
      */
-    @DeleteMapping("/batch")
+    @PostMapping("/batch")
     public Result deleteBatch(@RequestBody List<Integer> notificationIds, @RequestParam Integer userId) {
         log.info("批量删除通知: notificationIds={}, userId={}", notificationIds, userId);
         BatchResult batchResult = notificationService.deleteBatch(notificationIds, userId);
 
         // 包装为统一的Result返回给前端
         if (batchResult.isAllSuccess()) {
-            return Result.success("全部添加成功", batchResult);
+            return Result.success("全部删除成功", batchResult);
         } else if (batchResult.getFailureCount() > 0) {
             // 部分成功，使用特定状态码
-            return Result.error(201, "部分添加成功", batchResult);
+            return Result.error(201, "部分删除成功", batchResult);
         } else {
             return Result.error("添加失败", batchResult);
         }

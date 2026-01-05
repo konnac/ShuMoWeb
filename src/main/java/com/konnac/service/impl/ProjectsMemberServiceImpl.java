@@ -236,52 +236,6 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
     }
 
     /**
-     * 获取项目成员角色详细 (待完成)
-     */
-    public List<ProjectMember> getMembersDetails(Integer projectId) {
-        log.debug("获取项目成员角色详细: projectId={}", projectId);
-        List<ProjectMember> projectMembers = getProjectMembers(projectId);
-
-        //获取任务统计信息
-        for (ProjectMember projectMember : projectMembers) {
-            TaskStats taskStats = tasksMapper.getUserTaskStatsInProject(projectId, projectMember.getUserId());
-            projectMember.setTaskStats(taskStats);
-        }
-        log.info("获取项目成员角色详细成功");
-        return projectMembers;
-    }
-
-    /**
-     * 获取用户参与的所有项目
-     */
-    public List<UserProject> getUserProjects(Integer userId) {
-        log.debug("获取用户参与项目: userId={}", userId);
-        List<ProjectMember> projectMembers = projectsMemberMapper.findByUserId(userId);
-
-        List<UserProject> userProjects = new ArrayList<>();
-        for (ProjectMember projectMember : projectMembers) {
-            Project project = projectsMapper.getProjectById(projectMember.getProjectId());
-            if (project != null) {
-                UserProject userProject = new UserProject();
-                userProject.setId(project.getId());
-                userProject.setProjectName(project.getName());
-                userProject.setProjectStatus(project.getStatus().toString());
-                userProject.setProjectDescription(project.getDescription());
-                userProject.setProjectRole(projectMember.getProjectRole());
-                userProject.setJoinDate(projectMember.getJoinDate());
-                userProject.setTaskStats(tasksMapper.getUserTaskStatsInProject(project.getId(), userId));
-
-                //获取用户在该项目的任务统计
-                TaskStats taskStats = tasksMapper.getUserTaskStatsInProject(project.getId(), userId);
-                userProject.setTaskStats(taskStats);
-                userProjects.add(userProject);
-            }
-        }
-        log.info("获取用户参与项目成功");
-        return userProjects;
-    }
-
-    /**
      * 获取项目中的特定角色成员
      */
     public List<Integer> getProjectMembersByRole(Integer projectId, String projectRole) {

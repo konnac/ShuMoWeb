@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 public class Task {
     private Integer id;
     private Integer projectId; // 项目ID
+    private String projectName; // 项目名称
     private String title; // 任务标题
     private String description; // 任务描述
     private Integer assigneeId; // 任务执行人ID
@@ -32,7 +33,7 @@ public class Task {
     public enum TaskStatus {
         NOT_STARTED("未开始"),
         IN_PROGRESS("进行中"),
-        PENDING_REVIEW("待评审"),
+        DELAY("已延期"),
         COMPLETED("已完成"),
         CANCELLED("已取消");
 

@@ -23,16 +23,18 @@ public class LoginController {
     public Result login(@RequestBody User user){
         log.info("用户登录，用户名：{}", user.getUsername());
         User u = loginService.login(user);
-        //登陆成功,生成令牌并下发令牌
         if(u != null){
             Map<String, Object> claims = new HashMap<>();
             claims.put("id", u.getId());
             claims.put("username", u.getUsername());
             claims.put("role", u.getRole().toString());
 
-            //jwt包含了用户信息
             String jwt = JwtUtils.generateJwt(claims);
-            return Result.success(jwt);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("token", jwt);
+            result.put("userInfo", u);
+            return Result.success(result);
         }
         log.warn("用户登录失败，用户名：{}", user.getUsername());
         return Result.error("用户名或密码错误");

@@ -8,7 +8,6 @@ import com.konnac.context.UserContext;
 import com.konnac.utils.JwtUtils;
 import com.konnac.utils.SpringContextUtils;
 import jakarta.servlet.*;
-import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -17,20 +16,12 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 
 @Slf4j
-@WebFilter("/*")
 public class LoginCheckFilter implements Filter {
-
-    // 这里需要注入UsersMapper，但由于Filter不是Spring管理的Bean，我们需要特殊处理
-    // 方法1：使用Spring的AutowiredAnnotationBeanPostProcessor
-    // 方法2：通过ApplicationContext获取
-    // 方法3：在init方法中获取
 
     private UsersMapper usersMapper;
 
-    @Override
-    public void init(FilterConfig filterConfig){
-        // 通过Spring工具类获取Bean
-        usersMapper = SpringContextUtils.getBean(UsersMapper.class);
+    public void setUsersMapper(UsersMapper usersMapper) {
+        this.usersMapper = usersMapper;
     }
 
     // 白名单列表
@@ -115,6 +106,8 @@ public class LoginCheckFilter implements Filter {
             }
 
             // 设置用户上下文
+            UserContext.setCurrentUserId(userId);
+            UserContext.setCurrentUserRole(userRole);
             UserContext.setCurrentUser(user);
             log.debug("设置用户上下文: userId={}, username={}, userRole={}", userId, user.getUsername(), userRole);
 

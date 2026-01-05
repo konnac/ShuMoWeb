@@ -39,4 +39,14 @@ public interface UsersService {
     PageBean page(Integer page, Integer pageSize, Integer id, String username, String realName, User.UserRole role,
                   @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate begin,
                   @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate end);
+
+    /**
+     * 检查用户名是否存在
+     */
+    boolean existsByUsername(String username, Integer excludeId);
+
+    /**
+     * 统计用户数量
+     */
+    long countUsers();
 }

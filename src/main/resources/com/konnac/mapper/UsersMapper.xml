@@ -121,16 +121,6 @@
         LIMIT 1
     </select>
 
-    <!-- 新增：检查用户名是否存在 -->
-    <select id="existsByUsername" resultType="boolean">
-        SELECT COUNT(1) > 0
-        FROM users
-        WHERE username = #{username}
-        <if test="excludeId != null">
-            AND id != #{excludeId}
-        </if>
-    </select>
-
     <!-- 新增：批量更新员工状态（示例） -->
     <update id="batchUpdateRole">
         UPDATE users

@@ -71,4 +71,12 @@ public class UsersController {
         return Result.success(pageBean);
     }
 
+    //检查用户名是否存在
+    @GetMapping("/check-username")
+    public Result checkUsername(@RequestParam String username, @RequestParam(required = false) Integer excludeId) {
+        log.info("检查用户名是否存在，参数：username={},excludeId={}", username, excludeId);
+        boolean exists = usersService.existsByUsername(username, excludeId);
+        return Result.success(!exists);
+    }
+
 }

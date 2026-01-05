@@ -20,6 +20,15 @@ document:
   allowed-types: pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,png,zip,rar
   temp-file-expire: 24
 
+#阿里云OSS配置
+aliyun:
+  oss:
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    access-key-id: LTAI5tDvBU7iKMX39NSStVP3
+    access-key-secret: Yewq5Gh0bRGMPPpXGxjtyMyAKisVlw
+    bucket-name: web-konnac-management
+    base-url: https://web-konnac-management.oss-cn-hangzhou.aliyuncs.com/
+
 
 mybatis:
   configuration:

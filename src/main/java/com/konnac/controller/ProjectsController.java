@@ -1,9 +1,13 @@
 package com.konnac.controller;
 
+import com.konnac.annotation.RequirePermission;
+import com.konnac.context.UserContext;
+import com.konnac.enums.PermissionType;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Project;
 import com.konnac.pojo.Result;
 import com.konnac.service.ProjectsService;
+import com.konnac.utils.AuthUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -29,7 +33,7 @@ public class ProjectsController {
     @PostMapping
     public Result addProject(@RequestBody Project project) {
         log.info("添加项目，项目信息：{}", project);
-        projectsService.addProject(project, project.getManagerId());
+        projectsService.addProject(project, AuthUtils.getCurrentUserId());
         return Result.success();
     }
 
@@ -53,19 +57,6 @@ public class ProjectsController {
         return Result.success();
     }
 
-//==============查询项目================
-//    /**
-//     *  根据id查询项目
-//     */
-//    @GetMapping("/{id}")
-//    public Result getProject(@PathVariable Integer id) {
-//        log.info("查询项目，项目id：{}", id);
-//        Project project = projectsService.getProjectById(id);
-//        return Result.success(project);
-//    }
-
-
-
     /**
      *  分页查询项目
      */
@@ -78,12 +69,25 @@ public class ProjectsController {
                        Project.Priority priority,
                        Project.ProjectStatus status,
                        @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate begin,
-                       @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate end,
-                       @RequestParam Integer currentUserId){
-        log.info("分页查询，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={},currentUserId={}", page, pageSize, id, name, description, priority, status, begin, end, currentUserId);
-        PageBean pageBean = projectsService.page(page, pageSize, id, name, description, priority, status, begin, end, currentUserId);
+                       @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate end
+                       ){
+        log.info("分页查询，参数：page={},pageSize={},id={},name={},description={},priority={},status={},begin={},end={}", page, pageSize, id, name, description, priority, status, begin, end);
+        PageBean pageBean = projectsService.page(page, pageSize, id, name, description, priority, status, begin, end, AuthUtils.getCurrentUserId());
 
         return Result.success(pageBean);
     }
+
+    /**
+     * 统计所有项目数量
+     */
+    @GetMapping("/count")
+    public Result countProjects() {
+        log.info("统计项目总数量");
+        long count = projectsService.countProjects();
+        return Result.success(count);
+    }
+
+
+
 
 }

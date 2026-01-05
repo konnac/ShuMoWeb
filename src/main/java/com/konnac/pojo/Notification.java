@@ -11,7 +11,7 @@ public class Notification {
     private Integer userId;          // 接收用户ID
     private String title;            // 通知标题
     private String content;          // 通知内容
-    private NotificationType type;   // 通知类型
+    private NotificationType type;   // 通知类型(枚举)
     private String relatedType;      // 关联类型（项目、任务等）
     private Integer relatedId;       // 关联ID
     private Boolean isRead;          // 是否已读
@@ -27,6 +27,7 @@ public class Notification {
         TASK_ASSIGNED("任务分配"),
         TASK_COMPLETED("任务完成"),
         TASK_MEMBER_REMOVED("任务成员移除"),
+        TASK_MEMBER_ROLE_CHANGED("任务成员角色变更"),
         TASK_DUE_SOON("任务即将到期"),
         ANNOUNCEMENT("普通通知"), // relatedID : -1
         SYSTEM_ANNOUNCEMENT("系统通知"); // relatedID : 0

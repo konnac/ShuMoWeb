@@ -23,7 +23,6 @@ public class BatchResult {
     public void addSuccess(Integer userId) {
         successCount++;
         successUserIds.add(userId);
-        total++;
     }
 
     /**
@@ -32,7 +31,6 @@ public class BatchResult {
     public void addFailure(Integer userId, String error) {
         failureCount++;
         failureDetails.put(userId, error);
-        total++;
     }
 
     /**

@@ -17,6 +17,7 @@ public class Project {
     private String name;
     private String description;
     private Integer managerId;       // 项目经理ID
+    private String managerName;     // 项目经理姓名
     private LocalDate startDate;     // 项目开始日期
     private LocalDate endDate;       // 项目结束日期
     private Priority priority;       // 优先级枚举

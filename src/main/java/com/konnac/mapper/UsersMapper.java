@@ -2,6 +2,7 @@ package com.konnac.mapper;
 
 import com.konnac.pojo.User;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDate;
@@ -16,7 +17,7 @@ public interface UsersMapper {
     void addUser(User user);
 
     /**
-     *  删除员工
+     *  删除员工(软删除)
      */
     void deleteUser(Integer[] ids);
 
@@ -40,4 +41,16 @@ public interface UsersMapper {
      *  分页条件查询
      */
     List<User> list(Integer id, String username, String realName, User.UserRole role, LocalDate begin, LocalDate end);
+
+    /**
+     * 检查用户名是否存在
+     */
+    @Select("SELECT COUNT(1) FROM users WHERE username = #{username} AND id != #{excludeId}")
+    boolean existsByUsername(@Param("username") String username, @Param("excludeId") Integer excludeId);
+
+    /**
+     * 统计员工总数
+     */
+    @Select("SELECT COUNT(1) FROM users")
+    long countUsers();
 }

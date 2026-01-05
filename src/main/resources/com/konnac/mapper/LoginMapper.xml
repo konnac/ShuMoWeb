@@ -10,7 +10,7 @@
         <result property="realName" column="real_name"/>
         <result property="password" column="password"/>
         <result property="avatar" column="avatar"/>
-        <result property="role" column="role" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="role" column="role" javaType="com.konnac.pojo.User$UserRole"/>
         <result property="email" column="email"/>
         <result property="department" column="department"/>
         <result property="departmentId" column="department_id"/>

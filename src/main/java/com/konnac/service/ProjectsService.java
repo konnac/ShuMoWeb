@@ -37,4 +37,19 @@ public interface ProjectsService {
                   @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate begin,
                   @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate end,
                   Integer currentUserId);
+
+    /**
+     * 统计项目总数
+     */
+    long countProjects();
+
+    /**
+     * 获取指定用户参与的项目总数
+     */
+    long getUserProjectCount(Integer userId);
+
+    /**
+     * 获取指定用户参与的活跃项目数
+     */
+    long getUserActiveProjectCount(Integer userId);
 }

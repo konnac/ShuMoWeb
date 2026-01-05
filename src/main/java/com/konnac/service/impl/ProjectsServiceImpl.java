@@ -9,9 +9,12 @@ import com.konnac.exception.BusinessException;
 import com.konnac.mapper.ProjectsMapper;
 import com.konnac.mapper.TasksMapper;
 import com.konnac.mapper.UsersMapper;
+import com.konnac.mapper.ProjectsMemberMapper;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Project;
+import com.konnac.pojo.ProjectMember;
 import com.konnac.pojo.User;
+import com.konnac.service.NotificationService;
 import com.konnac.service.ProjectsService;
 import com.konnac.utils.AuthUtils;
 import com.konnac.utils.PageHelperUtils;
@@ -35,12 +38,16 @@ public class ProjectsServiceImpl implements ProjectsService {
 
     @Autowired
     private TasksMapper tasksMapper;
+
+    @Autowired
+    private ProjectsMemberMapper projectsMemberMapper;
+
 //===============增删改项目==============
 
     /**
      *添加项目
      */
-    @RequirePermission(value = PermissionType.PROJECT_ADD)
+    @RequirePermission(value = PermissionType.PROJECT_ADD, checkProject = false)
     @Override
     public void addProject(Project project, Integer operatorId) {
         log.debug("添加项目，项目信息：{}", project);
@@ -50,10 +57,57 @@ public class ProjectsServiceImpl implements ProjectsService {
         if (existingProject != null) {
             throw new BusinessException("项目名称重复");
         }
+
+        //  3.获取操作人信息
+        User operator = usersMapper.getUserById(operatorId);
+        if (operator == null) {
+            throw new BusinessException("操作人不存在");
+        }
+
+        //  4.根据操作人角色设置项目经理
+        if (User.UserRole.PROJECT_MANAGER.equals(operator.getRole())) {
+            // 项目经理添加项目，自动将自己设为项目经理
+            project.setManagerId(operatorId);
+            log.info("项目经理添加项目，自动将自己设为项目经理，项目经理id：{}", operatorId);
+        } else if (User.UserRole.ADMIN.equals(operator.getRole())) {
+            // 管理员添加项目，必须指定项目经理
+            if (project.getManagerId() == null) {
+                throw new BusinessException("管理员添加项目必须指定项目经理");
+            }
+            // 验证指定的项目经理是否存在且角色正确
+            User manager = usersMapper.getUserById(project.getManagerId());
+            if (manager == null) {
+                throw new BusinessException("指定的项目经理不存在");
+            }
+            if (!User.UserRole.PROJECT_MANAGER.equals(manager.getRole())) {
+                throw new BusinessException("指定的用户不是项目经理");
+            }
+            log.info("管理员添加项目，指定项目经理id：{}", project.getManagerId());
+        } else {
+            throw new BusinessException("只有项目经理或管理员可以添加项目");
+        }
+
         project.setCreatedTime(LocalDateTime.now());
         project.setUpdateTime(LocalDateTime.now());
         projectsMapper.addProject(project);
         log.info("添加项目成功，项目id：{}", project.getId());
+
+        //  5.自动将项目经理添加为项目成员（直接使用Mapper绕过权限检查）
+        try {
+            ProjectMember projectMember = new ProjectMember();
+            projectMember.setProjectId(project.getId());
+            projectMember.setUserId(project.getManagerId());
+            projectMember.setProjectRole("PROJECT_MANAGER");
+            projectMember.setJoinBy(operatorId);
+            projectMember.setStatus(ProjectMember.MemberStatus.ACTIVE);
+            projectMember.setJoinDate(LocalDateTime.now());
+            projectsMemberMapper.addProjectMember(projectMember);
+            log.info("自动将项目经理添加为项目成员成功，项目id：{}，项目经理id：{}", project.getId(), project.getManagerId());
+        } catch (Exception e) {
+            log.error("添加项目经理为项目成员失败，项目id：{}，项目经理id：{}", project.getId(), project.getManagerId(), e);
+            throw new BusinessException("添加项目经理为项目成员失败：" + e.getMessage());
+        }
+
     }
 
     /**
@@ -206,12 +260,27 @@ public class ProjectsServiceImpl implements ProjectsService {
                         description,
                         priority,
                         status,
-                        begin,  // 注意：这里需要与 Mapper 参数名匹配
-                        end,    // 注意：这里需要与 Mapper 参数名匹配
+                        begin,
+                        end,
                         currentUserId
                 )
         );
         log.info("分页查询项目成功，结果：{}", pageBean);
         return new PageBean(pageBean.getTotal(), pageBean.getList());
+    }
+
+    @Override
+    public long countProjects() {
+        return projectsMapper.count();
+    }
+
+    @Override
+    public long getUserProjectCount(Integer userId) {
+        return projectsMapper.getUserProjectCount(userId);
+    }
+
+    @Override
+    public long getUserActiveProjectCount(Integer userId) {
+        return projectsMapper.getUserActiveProjectCount(userId);
     }
 }

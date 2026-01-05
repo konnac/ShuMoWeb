@@ -41,6 +41,13 @@ public enum PermissionType {
     USER_UPDATE_ADMIN("修改用户信息(管理员)"),
     USER_UPDATE("修改用户信息(普通用户)"),
 
+    // 文件管理权限
+    FILE_UPLOAD("上传文件"),
+    FILE_DOWNLOAD("下载文件"),
+    FILE_DELETE("删除文件"),
+    FILE_VIEW("查看文件"),
+
+
     // 其他通用权限
     EXPORT_DATA("导出数据"),
     VIEW_STATS("查看统计"),

@@ -70,4 +70,8 @@ public interface NotificationMapper {
                             LocalDate begin,
                             LocalDate end);
 
+    /**
+     * 根据ID获取通知详情
+     */
+    Notification getById(Integer notificationId);
 }

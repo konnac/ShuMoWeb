@@ -37,7 +37,7 @@ public class TaskMemberServiceImpl implements TaskMemberService {
     private NotificationService notificationService;
 
     // ======================增删改功能======================
-    @RequirePermission(value = PermissionType.TASK_ASSIGN)
+    @RequirePermission(value = PermissionType.TASK_ASSIGN, checkProject = false, checkTask = true)
     @Override
     public void addTaskMember(Integer taskId, Integer userId, String taskRole, Integer operatorId) {
         log.debug("添加任务成员: taskId={}, userId={}, taskRole={}", taskId, userId, taskRole);
@@ -54,27 +54,31 @@ public class TaskMemberServiceImpl implements TaskMemberService {
             throw new BusinessException("要添加任务的用户不存在");
         }
 
-        //3.验证用户是否已经加入任务
-        if (tasksMemberMapper.isTaskMemberExist(taskId, userId)) {
-            throw new BusinessException("用户已是任务成员");
+        TaskMember taskMember = tasksMemberMapper.getMemberByTaskIdAndUserId(taskId, userId);
+        if (taskMember != null) {
+            if (taskMember.getStatus() == TaskMember.MemberStatus.INACTIVE) {
+                taskMember.setStatus(TaskMember.MemberStatus.ACTIVE);
+                taskMember.setTaskRole(taskRole);
+                taskMember.setJoinBy(operatorId);
+                taskMember.setUpdateTime(LocalDateTime.now());
+                tasksMemberMapper.updateTaskMember(taskMember);
+                log.info("重新激活任务成员: taskId={}, userId={}", taskId, userId);
+            } else {
+                throw new BusinessException("用户已经是任务成员");
+            }
+        } else {
+            TaskMember newTaskMember = new TaskMember();
+            newTaskMember.setTaskId(taskId);
+            newTaskMember.setUserId(userId);
+            newTaskMember.setTaskRole(taskRole);
+            newTaskMember.setJoinBy(operatorId);
+            newTaskMember.setStatus(TaskMember.MemberStatus.ACTIVE);
+            newTaskMember.setJoinDate(LocalDateTime.now());
+            tasksMemberMapper.addTaskMember(newTaskMember);
         }
 
-        //4.创建项目成员记录
-        TaskMember taskMember = new TaskMember();
-        taskMember.setTaskId(taskId);
-        taskMember.setUserId(userId);
-        taskMember.setTaskRole(taskRole);
-        taskMember.setJoinBy(operatorId);
-        taskMember.setStatus(TaskMember.MemberStatus.ACTIVE);
-        taskMember.setJoinDate(LocalDateTime.now());
-
-        //5.添加项目成员
-        tasksMemberMapper.addTaskMember(taskMember);
-
-        //6.发送通知
         notificationService.sendTaskAssignNotification(taskId, userId, operatorId);
 
-        //7.记录日志
         log.debug("添加任务成员成功: taskId={}, userId={}, taskRole={}", taskId, userId, taskRole);
     }
 
@@ -101,8 +105,7 @@ public class TaskMemberServiceImpl implements TaskMemberService {
         //2.批量添加项目成员,失败跳过且添加失败的成员记录
         for (Integer userId : userIds) {
             try {
-                addTaskMember(taskId, userId, "协作者", null);
-                //发送通知
+                addTaskMember(taskId, userId, "COLLABORATOR", null);
                 notificationService.sendAddNotification(taskId, userId, operatorId);
                 batchResult.addSuccess(userId);
             } catch (BusinessException e) {
@@ -173,7 +176,7 @@ public class TaskMemberServiceImpl implements TaskMemberService {
 
         log.info("更新任务成员角色成功: taskId={}, userId={}, newTaskRole={}, operatorId={}", taskId, userId, newTaskRole, operatorId);
 
-        notificationService.sendUpdateMemberRoleNotification(taskId, userId, operatorId, ProjectRole.valueOf(newTaskRole));
+        notificationService.sendUpdateTaskMemberRoleNotification(taskId, userId, operatorId, TaskRole.valueOf(newTaskRole));
     }
 
     /**

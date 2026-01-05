@@ -26,7 +26,7 @@ public class UsersServiceImpl implements UsersService {
     /**
      * 添加用户
      */
-    @RequirePermission(value = PermissionType.USER_ADD)
+    @RequirePermission(value = PermissionType.USER_ADD, checkProject = false)
     @Override
     public void addUser(User user) {
         user.setCreatedTime(LocalDateTime.now());
@@ -37,7 +37,7 @@ public class UsersServiceImpl implements UsersService {
     /**
      * 删除用户
      */
-    @RequirePermission(value = PermissionType.USER_DELETE)
+    @RequirePermission(value = PermissionType.USER_DELETE, checkProject = false)
     @Override
     public void deleteUser(Integer[] ids) {
         UsersMapper.deleteUser(ids);
@@ -46,7 +46,7 @@ public class UsersServiceImpl implements UsersService {
     /**
      * 修改用户(管理员)
      */
-    @RequirePermission(value = PermissionType.USER_UPDATE_ADMIN)
+    @RequirePermission(value = PermissionType.USER_UPDATE_ADMIN, checkProject = false)
     @Override
     public void updateUserAdmin(User user) {
         user.setUpdateTime(LocalDateTime.now());
@@ -56,7 +56,7 @@ public class UsersServiceImpl implements UsersService {
     /**
      * 修改用户(普通用户)
      */
-    @RequirePermission(value = PermissionType.USER_UPDATE)
+    @RequirePermission(value = PermissionType.USER_UPDATE, checkProject = false)
     @Override
     public void updateUser(User user) {
         user.setUpdateTime(LocalDateTime.now());
@@ -77,7 +77,7 @@ public class UsersServiceImpl implements UsersService {
     /**
      * 分页查询
      */
-    @RequirePermission(value = PermissionType.USER_VIEW_DETAIL, checkProject = false)
+    @RequirePermission(value = PermissionType.USER_VIEW_SIMPLE, checkProject = false)
     @Override
     public PageBean page(Integer page,
                          Integer pageSize,
@@ -90,4 +90,22 @@ public class UsersServiceImpl implements UsersService {
         PageInfo<User> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> UsersMapper.list(id, username, realName, role, begin, end));
         return new PageBean(pageBean.getTotal(), pageBean.getList());
     }
+
+    /**
+     * 检查用户名是否存在
+     */
+    @Override
+    public boolean existsByUsername(String username, Integer excludeId) {
+        return UsersMapper.existsByUsername(username, excludeId);
+    }
+
+    /**
+     * 统计用户总数
+     */
+    @Override
+    public long countUsers() {
+        return UsersMapper.countUsers();
+    }
+
+
 }

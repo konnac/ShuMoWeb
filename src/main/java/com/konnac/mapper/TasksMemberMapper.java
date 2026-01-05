@@ -20,5 +20,8 @@ public interface TasksMemberMapper {
     void updateTaskMember(TaskMember taskMember);
 
     //分页获取任务成员
-    List<TaskMember> list(Integer taskId, String name, String realName, String userRole, String department);
+    List<TaskMember> list(Integer taskId, String name, String realName, String taskRole, String department);
+
+    //根据任务id获取任务成员id列表
+    List<Integer> getTaskMembersIds(Integer taskId);
 }

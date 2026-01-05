@@ -61,4 +61,32 @@ public interface ProjectsMapper {
             @Param("begin") LocalDate begin,  // 项目开始时间
             @Param("end") LocalDate end       // 项目结束时间
     );
+
+    /**
+     *  查询我负责的项目
+     */
+    @Select("SELECT * FROM projects WHERE manager_id = #{userId} ORDER BY id DESC")
+    List<Project> listMyProjects(@Param("currentUserId") Integer currentUserId);
+
+    /**
+     * 统计项目总数
+     */
+    long count();
+
+    /**
+     * 获取指定用户参与的项目总数
+     */
+    @Select("SELECT COUNT(DISTINCT p.id) FROM projects p " +
+            "WHERE p.manager_id = #{userId} " +
+            "OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = #{userId})")
+    long getUserProjectCount(Integer userId);
+
+    /**
+     * 获取指定用户参与的活跃项目数
+     */
+    @Select("SELECT COUNT(DISTINCT p.id) FROM projects p " +
+            "WHERE (p.manager_id = #{userId} " +
+            "OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = #{userId})) " +
+            "AND p.status = 'IN_PROGRESS'")
+    long getUserActiveProjectCount(Integer userId);
 }

@@ -117,7 +117,7 @@ public class PermissionAspect {
         if (!hasPermission) {
             log.warn("权限验证失败: 用户[{}] 无权限[{}] 项目[{}]",
                     currentUser.getUsername(), requirePermission.value(), projectId);
-            throw new BusinessException(requirePermission.errorMessage());
+            throw new BusinessException(403, requirePermission.errorMessage());
         }
 
         log.debug("权限验证通过: 用户[{}] 权限[{}]",
@@ -169,6 +169,22 @@ public class PermissionAspect {
             }
         }
 
+        // 如果从参数中找不到，尝试从URL路径中提取
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            String uri = request.getRequestURI();
+            // 匹配 /projects/{projectId}/... 格式的URL
+            if (uri.contains("/projects/")) {
+                String[] parts = uri.split("/");
+                for (int i = 0; i < parts.length; i++) {
+                    if ("projects".equals(parts[i]) && i + 1 < parts.length) {
+                        return extractInteger(parts[i + 1]);
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
@@ -182,16 +198,6 @@ public class PermissionAspect {
         String[] paramNames = ((MethodSignature) joinPoint.getSignature()).getParameterNames();
 
         //====从方法参数中提取任务id====
-
-        // 指定了参数名，直接获取
-        if (!annotation.projectIdParam().isEmpty()) {
-            for (int i = 0; i < paramNames.length; i++) {
-                if (annotation.projectIdParam().equals(paramNames[i])) {
-                    Object arg = args[i];
-                    return extractInteger(arg);
-                }
-            }
-        }
 
         // 尝试从常见参数名中查找
         String[] commonNames = {"taskId", "id", "pid"};
@@ -213,6 +219,22 @@ public class PermissionAspect {
                     return extractInteger(idObj);
                 } catch (Exception e) {
                     // 忽略异常，继续查找
+                }
+            }
+        }
+
+        // 如果从参数中找不到，尝试从URL路径中提取
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            String uri = request.getRequestURI();
+            // 匹配 /projects/{projectId}/tasks/{taskId} 格式的URL
+            if (uri.contains("/tasks/")) {
+                String[] parts = uri.split("/");
+                for (int i = 0; i < parts.length; i++) {
+                    if ("tasks".equals(parts[i]) && i + 1 < parts.length) {
+                        return extractInteger(parts[i + 1]);
+                    }
                 }
             }
         }
@@ -299,9 +321,9 @@ public class PermissionAspect {
                 case TASK_DELETE:
                 case TASK_ASSIGN:
                     if (taskId == null) return false;
-                    return checkTaskLeaderPermission(taskId, userId);
+                    // 任务负责人或项目经理都可以操作
+                    return checkTaskLeaderPermission(taskId, userId) || checkProjectManagerPermissionByTaskId(taskId, userId);
 
-                //用户权限
                 case USER_ADD:
                 case USER_UPDATE_ADMIN:
                 case USER_DELETE:
@@ -311,6 +333,12 @@ public class PermissionAspect {
                     checkUserId(userId);
                 case USER_VIEW_SIMPLE:
                     return true;
+
+                case FILE_UPLOAD:
+                case FILE_VIEW:
+                case FILE_DELETE:
+                case FILE_DOWNLOAD:
+                    return checkNomalMemberPermission(projectId, userId);
 
 
                 // 其他权限
@@ -344,6 +372,24 @@ public class PermissionAspect {
      */
     private boolean checkTaskLeaderPermission(Integer taskId, Integer userId) {
         return tasksMapper.getTaskById(taskId).getAssigneeId().equals(userId);
+    }
+
+    /**
+     * 验证是否是任务所属项目的项目经理
+     */
+    private boolean checkProjectManagerPermissionByTaskId(Integer taskId, Integer userId) {
+        try {
+            // 获取任务信息
+            com.konnac.pojo.Task task = tasksMapper.getTaskById(taskId);
+            if (task == null || task.getProjectId() == null) {
+                return false;
+            }
+            // 检查用户是否是该项目的项目经理
+            return checkProjectManagerPermission(task.getProjectId(), userId);
+        } catch (Exception e) {
+            log.error("检查项目经理权限失败", e);
+            return false;
+        }
     }
 
     /**

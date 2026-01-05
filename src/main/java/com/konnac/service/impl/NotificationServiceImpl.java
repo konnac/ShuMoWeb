@@ -36,6 +36,9 @@ public class NotificationServiceImpl implements NotificationService {
     private TasksMapper tasksMapper;
 
     @Autowired
+    private TasksMemberMapper tasksMemberMapper;
+
+    @Autowired
     private ProjectsMapper projectsMapper;
 
     @Autowired
@@ -50,6 +53,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendNotification(Notification notification) {
         log.debug("正在发送通知: {}", notification);
         notification.setIsRead(false);
+        notification.setIsDeleted(false);
         notification.setCreatedAt(LocalDateTime.now());
         notificationMapper.insert(notification);
         log.info("发送通知成功:");
@@ -59,11 +63,19 @@ public class NotificationServiceImpl implements NotificationService {
      * 发送自定义通知
      */
     public BatchResult sendCustomNotification(List<Integer> userIds, Notification notification) {
-        log.debug("正在发送自定义通知: userId={}, notification={}", userIds, notification);
+        log.debug("正在发送自定义通知: userIds={}, notification={}", userIds, notification);
+        log.info("接收到的用户ID列表大小: {}, 内容: {}", userIds.size(), userIds);
+        
         //验证参数
         if (userIds == null || userIds.isEmpty()) {
             log.warn("用户列表不能为空");
             throw new BusinessException("用户列表不能为空");
+        }
+
+        //去重：移除重复的用户ID
+        List<Integer> uniqueUserIds = userIds.stream().distinct().collect(java.util.stream.Collectors.toList());
+        if (uniqueUserIds.size() < userIds.size()) {
+            log.warn("用户ID列表中存在重复项，原始大小: {}, 去重后大小: {}", userIds.size(), uniqueUserIds.size());
         }
 
         //获取当前用户
@@ -77,17 +89,17 @@ public class NotificationServiceImpl implements NotificationService {
 
         //1.包装批量结果
         BatchResult batchResult = new BatchResult();
-        batchResult.setTotal(userIds.size());
+        batchResult.setTotal(uniqueUserIds.size());
 
-        for (Integer userId : userIds) {
+        for (Integer userId : uniqueUserIds) {
             try {
                 sendNotificationToUser(
                         userId,
                         notification.getTitle(),
                         notification.getContent(),
-                        notification.getType(), // 使用经过校验的类型
+                        notification.getType(),
                         notification.getRelatedType(),
-                        notification.getType() == Notification.NotificationType.ANNOUNCEMENT ? -1 : 0);
+                        notification.getRelatedId());
                 batchResult.addSuccess(userId);
             } catch (BusinessException e) {
                 batchResult.addFailure(userId, e.getMessage());
@@ -144,9 +156,7 @@ public class NotificationServiceImpl implements NotificationService {
         List<Notification> notifications = new ArrayList<>();
 
         for (Integer userId : userIds) {
-            //创建通知
             Notification notification = new Notification();
-            //设置通知
             notification.setUserId(userId);
             notification.setTitle(title);
             notification.setContent(content);
@@ -154,8 +164,8 @@ public class NotificationServiceImpl implements NotificationService {
             notification.setRelatedType(relatedType);
             notification.setRelatedId(relatedId);
             notification.setIsRead(false);
+            notification.setIsDeleted(false);
             notification.setCreatedAt(LocalDateTime.now());
-            //添加到列表
             notifications.add(notification);
         }
 
@@ -202,8 +212,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendNotificationToTaskMembers(Integer projectId, Integer taskId, String title, String content,
                                               Notification.NotificationType type) {
         log.debug("正在发送通知给任务成员: projectId={}, taskId={}, title={}, content={}, type={}", projectId, taskId, title, content, type);
-        // 需要调用任务服务获取任务成员ID列表
-        List<Integer> memberIds = tasksMapper.getTaskMembersId(projectId, taskId);
+        List<Integer> memberIds = tasksMemberMapper.getTaskMembersIds(taskId);
         if (CollectionUtils.isEmpty(memberIds)) {
             log.warn("任务成员为空,无法发送通知: taskId={}", taskId);
             log.info("任务成员为空，跳过发送通知: taskId={}", taskId);
@@ -284,6 +293,19 @@ public class NotificationServiceImpl implements NotificationService {
             throw new BusinessException("分页查询通知失败:" + e.getMessage(), e);
         }
 
+    }
+
+    @Override
+    public Notification getById(Integer notificationId) {
+        try {
+            log.debug("正在获取通知详情: notificationId={}", notificationId);
+            Notification notification = notificationMapper.getById(notificationId);
+            log.info("获取通知详情成功: notificationId={}", notificationId);
+            return notification;
+        } catch (Exception e) {
+            log.warn("获取通知详情失败: {}", e.getMessage(), e);
+            throw new BusinessException("获取通知详情失败:" + e.getMessage(), e);
+        }
     }
 
 
@@ -412,12 +434,12 @@ public class NotificationServiceImpl implements NotificationService {
         try {
             log.debug("正在发送更新项目成员角色通知: projectId={}, userId={}, operatorId={}, newRole={}", projectId, userId, operatorId, newRole);
             Project project = projectsMapper.getProjectById(projectId);
-            User operator = usersMapper.getUserById(operatorId);
+            User member = usersMapper.getUserById(userId);
 
             String title = "项目成员角色已更新";
             String content = String.format("项目【%s】的成员【%s】角色已更新为【%s】",
                     project != null ? project.getName() : projectId,
-                    operator != null ? operator.getRealName() : "系统",
+                    member != null ? member.getRealName() : "系统",
                     newRole.getDescription());
 
             sendNotificationToUser(
@@ -437,12 +459,12 @@ public class NotificationServiceImpl implements NotificationService {
         try {
             log.debug("正在发送任务分配通知: taskId={}, userId={}, operatorId={}", taskId, userId, operatorId);
             Task task = tasksMapper.getTaskById(taskId);
-            User operator = usersMapper.getUserById(operatorId);
+            User user = usersMapper.getUserById(userId);
 
             String title = "任务已分配";
             String content = String.format("任务【%s】已分配给【%s】",
                     task != null ? task.getTitle() : taskId,
-                    operator != null ? operator.getRealName() : "系统");
+                    user != null ? user.getRealName() : "未知");
             sendNotificationToUser(
                     userId, title, content,
                     Notification.NotificationType.TASK_ASSIGNED,
@@ -481,6 +503,9 @@ public class NotificationServiceImpl implements NotificationService {
 
     }
 
+    /**
+     * 构建任务完成通知
+     */
     @Override
     public void sendTaskCompleteNotification(Integer taskId, Integer userId) {
         try {
@@ -498,6 +523,31 @@ public class NotificationServiceImpl implements NotificationService {
             log.info("发送任务完成通知成功: taskId={}, userId={}", taskId, userId);
         } catch (Exception e) {
             log.warn("发送任务完成通知失败: taskId={}, userId={}", taskId, userId, e);
+        }
+    }
+
+    /**
+     * 构建更新任务成员角色通知
+     */
+    @Override
+    public void sendUpdateTaskMemberRoleNotification(Integer taskId, Integer userId, Integer operatorId, TaskRole newRole) {
+        try {
+            log.debug("正在发送更新任务成员角色通知: taskId={}, userId={}, operatorId={}, newRole={}", taskId, userId, operatorId, newRole);
+            Task task = tasksMapper.getTaskById(taskId);
+            User operator = usersMapper.getUserById(operatorId);
+
+            String title = "任务成员角色已更新";
+            String content = String.format("任务【%s】的成员角色已更新为【%s】",
+                    task != null ? task.getTitle() : taskId,
+                    newRole.getDescription());
+
+            sendNotificationToUser(
+                    userId, title, content,
+                    Notification.NotificationType.TASK_MEMBER_ROLE_CHANGED,
+                    "task", taskId
+            );
+        } catch (Exception e) {
+            log.warn("发送更新任务成员角色通知失败: taskId={}, userId={}", taskId, userId, e);
         }
     }
 }

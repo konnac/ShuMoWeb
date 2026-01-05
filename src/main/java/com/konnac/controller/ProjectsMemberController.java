@@ -1,11 +1,15 @@
 package com.konnac.controller;
 
+import com.konnac.annotation.RequirePermission;
 import com.konnac.context.UserContext;
+import com.konnac.enums.PermissionType;
 import com.konnac.pojo.BatchResult;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.ProjectMember;
 import com.konnac.pojo.Result;
 import com.konnac.service.ProjectsMemberService;
+import com.konnac.utils.AuthUtils;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -70,15 +74,16 @@ public class ProjectsMemberController {
      * 更新项目成员角色
      */
     @PutMapping("/{userId}")
-    public Result updateMemberRole(@PathVariable Integer projectId, Integer userId, Integer operatorId, @RequestBody String newRole) {
-        log.info("更新项目成员角色，项目id：{}，用户id：{}，新角色：{}，操作人id：{}", projectId, userId, newRole, operatorId);
-        projectsMemberService.updateMemberRole(projectId, userId, newRole, operatorId);
+    public Result updateMemberRole(@PathVariable Integer projectId, @PathVariable Integer userId, @RequestBody ProjectMember projectMember) {
+        log.info("更新项目成员角色，项目id：{}，用户id：{}，新角色：{}，操作人id：{}", projectId, userId, projectMember.getProjectRole(), AuthUtils.getCurrentUserId());
+        projectsMemberService.updateMemberRole(projectId, userId, projectMember.getProjectRole(), AuthUtils.getCurrentUserId());
         return Result.success();
     }
 
     /**
      * 分页查询项目成员
      */
+    @RequirePermission(value = PermissionType.MEMBER_VIEW)
     @RequestMapping
     public Result page(@RequestParam(defaultValue = "1") Integer page,
                        @RequestParam(defaultValue = "10") Integer pageSize,
@@ -103,15 +108,6 @@ public class ProjectsMemberController {
         log.info("获取项目成员统计，项目id：{}", projectId);
         return Result.success(projectsMemberService.getProjectMemberStats(projectId));
     }
-
-//    /**
-//     * 获取我的项目
-//     */
-//    @GetMapping("/myprojects")
-//    public Result getMyProjects(@PathVariable Integer userId) {
-//        log.info("获取我的项目，用户id：{}", userId);
-//        return Result.success(projectsMemberService.getUserProjects(userId));
-//    }
 
     /**
      * 获取项目中的特定角色成员

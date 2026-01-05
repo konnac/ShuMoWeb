@@ -5,9 +5,13 @@
 <mapper namespace="com.konnac.mapper.TasksMapper">
 
     <sql id="commonSelect">
-        select id, project_id, title, description, assignee_id, estimated_hours,
-               actual_hours, deadline, status, created_time, update_time
-        from tasks
+        select t.id, t.project_id, p.name as project_name, t.title, t.description, t.assignee_id,
+               u.real_name as assignee_name,
+               t.estimated_hours, t.actual_hours, t.deadline, t.status,
+               t.created_time, t.update_time
+        from tasks t
+        left join projects p on t.project_id = p.id
+        left join users u on t.assignee_id = u.id
     </sql>
 <!--新增任务-->
     <insert id="addTask" useGeneratedKeys="true" keyProperty="id">
@@ -56,82 +60,86 @@
           and assignee_id = #{userId}
           and status != 'completed'
     </select>
-<!--查询用户在项目中的任务统计信息-->
-    <select id="getUserTaskStatsInProject" resultType="com.konnac.pojo.TaskStats">
 
-        select (select count(*) from tasks
-                where project_id = #{projectId}
-                  and assignee_id = #{userId})
-                    as total_tasks,
-                (select count(*) from tasks
-                where project_id = #{projectId}
-                  and assignee_id = #{userId}
-                  and status = 'NOT_STARTED')
-                    as not_started_tasks,
-               (select count(*)
-                from tasks
-                where project_id = #{projectId}
-                  and assignee_id = #{userId}
-                  and status = 'IN_PROGRESS')
-                   as in_progress_tasks,
-               (select count(*)
-                from tasks
-                where project_id = #{projectId}
-                  and assignee_id = #{userId}
-                  and status = 'COMPLETED')
-                   as completed_tasks,
-               (select count(*)
-                from tasks
-                where project_id = #{projectId}
-                  and assignee_id = #{userId}
-                  and status = 'PENDING_REVIEW')
-                   as pending_review_tasks,
-               (select sum(actual_hours)
-               from tasks
-               where project_id = #{projectId}
-                 and assignee_id = #{userId})
-                 as total_hours
-    </select>
-<!--根据任务id获取任务成员id列表-->
-    <select id="getTaskMembersId" resultType="int">
-        select assignee_id
-        from tasks
-        where project_id = #{projectId}
-          and id = #{taskId}
-          and status = 'ACTIVE'
-    </select>
-<!--分页查询-->
+    <!-- 分页查询（项目经理和普通员工：查看自己所在项目的任务） -->
     <select id="list" resultType="com.konnac.pojo.Task">
         <include refid="commonSelect"></include>
+        LEFT JOIN project_members pm ON t.project_id = pm.project_id
         <where>
+            <!-- 用户参与条件：用户是项目经理 或者 是项目成员 -->
+            AND (
+            t.project_id IN (SELECT id FROM projects WHERE manager_id = #{currentUserId})
+            OR (pm.user_id = #{currentUserId} AND pm.status = 'ACTIVE')
+            )
             <if test="projectId != null">
-                and project_id = #{projectId}
+                and t.project_id = #{projectId}
             </if>
             <if test="Id != null">
-                and id = #{Id}
+                and t.id = #{Id}
             </if>
             <if test="title != null and title.trim() != ''">
-                and title like concat('%', #{title}, '%')
+                and t.title like concat('%', #{title}, '%')
             </if>
             <if test="assigneeName != null and assigneeName.trim() != ''">
-                and assignee_name like concat('%', #{assigneeName}, '%')
+                and t.assignee_id in (select id from users where real_name like concat('%', #{assigneeName}, '%'))
             </if>
             <if test="status != null">
-                and status = #{status}
+                and t.status = #{status}
+            </if>
+            <if test="status == null">
+                and t.status != 'CANCELLED'
             </if>
             <choose>
                 <when test="begin != null and end != null">
-                    AND DATE(created_at) BETWEEN #{begin} AND #{end}
+                    AND DATE(t.created_time) BETWEEN #{begin} AND #{end}
                 </when>
                 <when test="begin != null">
-                    AND DATE(created_at) >= #{begin}
+                    AND DATE(t.created_time) >= #{begin}
                 </when>
                 <when test="end != null">
-                    AND #{end} >= DATE(created_at)
+                    AND #{end} >= DATE(t.created_time)
                 </when>
             </choose>
         </where>
-        ORDER BY created_at DESC
+        GROUP BY t.id
+        ORDER BY t.created_time DESC
+    </select>
+
+    <!-- 分页查询所有任务（管理员） -->
+    <select id="listAll" resultType="com.konnac.pojo.Task">
+        <include refid="commonSelect"></include>
+        <where>
+            <if test="projectId != null">
+                and t.project_id = #{projectId}
+            </if>
+            <if test="Id != null">
+                and t.id = #{Id}
+            </if>
+            <if test="title != null and title.trim() != ''">
+                and t.title like concat('%', #{title}, '%')
+            </if>
+            <if test="assigneeName != null and assigneeName.trim() != ''">
+                and t.assignee_id in (select id from users where real_name like concat('%', #{assigneeName}, '%'))
+            </if>
+            <if test="status != null">
+                and t.status = #{status}
+            </if>
+            <if test="status == null">
+                and t.status != 'CANCELLED'
+            </if>
+            <choose>
+                <when test="begin != null and end != null">
+                    AND DATE(t.created_time) BETWEEN #{begin} AND #{end}
+                </when>
+                <when test="begin != null">
+                    AND DATE(t.created_time) >= #{begin}
+                </when>
+                <when test="end != null">
+                    AND #{end} >= DATE(t.created_time)
+                </when>
+            </choose>
+        </where>
+        ORDER BY t.created_time DESC
     </select>
 <!--查询一个项目中未完成的任务数-->
     <select id="getUncompletedTaskCountByProjectId" resultType="java.lang.Integer">
@@ -140,6 +148,62 @@
         WHERE project_id = #{projectId}
           AND status IN ('NOT_STARTED',
                          'IN_PROGRESS',
-                         'PENDING_REVIEW')
+                         'DELAY')
+    </select>
+
+    <!-- 查询"我的任务" - 根据用户角色返回不同的任务列表 -->
+    <select id="listMyTasks" resultType="com.konnac.pojo.Task">
+        <include refid="commonSelect"></include>
+        <where>
+            <choose>
+                <!-- 管理员：查看所有任务 -->
+                <when test="userRole == 'ADMIN'">
+                    <if test="projectId != null">
+                        and t.project_id = #{projectId}
+                    </if>
+                </when>
+                <!-- 项目经理：查看自己负责的项目下的所有任务 -->
+                <when test="userRole == 'PROJECT_MANAGER'">
+                    AND t.project_id IN (SELECT id FROM projects WHERE manager_id = #{currentUserId})
+                    <if test="projectId != null">
+                        and t.project_id = #{projectId}
+                    </if>
+                </when>
+                <!-- 普通员工：只查看自己负责的任务 -->
+                <otherwise>
+                    AND t.assignee_id = #{currentUserId}
+                    <if test="projectId != null">
+                        and t.project_id = #{projectId}
+                    </if>
+                </otherwise>
+            </choose>
+            <if test="Id != null">
+                and t.id = #{Id}
+            </if>
+            <if test="title != null and title.trim() != ''">
+                and t.title like concat('%', #{title}, '%')
+            </if>
+            <if test="assigneeName != null and assigneeName.trim() != ''">
+                and t.assignee_id in (select id from users where real_name like concat('%', #{assigneeName}, '%'))
+            </if>
+            <if test="status != null">
+                and t.status = #{status}
+            </if>
+            <if test="status == null">
+                and t.status != 'CANCELLED'
+            </if>
+            <choose>
+                <when test="begin != null and end != null">
+                    AND DATE(t.created_time) BETWEEN #{begin} AND #{end}
+                </when>
+                <when test="begin != null">
+                    AND DATE(t.created_time) >= #{begin}
+                </when>
+                <when test="end != null">
+                    AND #{end} >= DATE(t.created_time)
+                </when>
+            </choose>
+        </where>
+        ORDER BY t.created_time DESC
     </select>
 </mapper>

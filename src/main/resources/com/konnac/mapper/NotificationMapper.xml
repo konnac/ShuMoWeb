@@ -4,16 +4,29 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.konnac.mapper.NotificationMapper">
 
+    <resultMap id="BaseResultMap" type="com.konnac.pojo.Notification">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="type" property="type"/>
+        <result column="related_type" property="relatedType"/>
+        <result column="related_id" property="relatedId"/>
+        <result column="active" property="isDeleted" typeHandler="com.konnac.handler.InverseBooleanTypeHandler"/>
+        <result column="is_read" property="isRead"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
     <sql id="commonSelect">
         select id, user_id, title, content, type, related_type,
-               related_id, is_read, created_at
+               related_id, active, is_read, created_at
         from notifications
     </sql>
 
     <!-- 新增通知 -->
     <insert id="insert" parameterType="com.konnac.pojo.Notification" useGeneratedKeys="true" keyProperty="id">
-        insert into notifications(user_id, title, content, type, related_type, related_id, is_read, created_at)
-        values(#{userId}, #{title}, #{content}, #{type}, #{relatedType}, #{relatedId}, #{isRead}, #{createdAt})
+        insert into notifications(user_id, title, content, type, related_type, related_id, active, is_read, created_at)
+        values(#{userId}, #{title}, #{content}, #{type}, #{relatedType}, #{relatedId}, 1, #{isRead}, #{createdAt})
     </insert>
 
     <!-- 标记已读 -->
@@ -32,9 +45,12 @@
     </update>
 
     <!-- 分页查询通知列表 -->
-    <select id="list" resultType="com.konnac.pojo.Notification">
+    <select id="list" resultMap="BaseResultMap">
         <include refid="commonSelect"/>
         <where>
+            <!-- 只查询未删除的记录 -->
+            AND active = true
+
             <!-- 用户ID（通常必传，查询特定用户的通知） -->
             <if test="userId != null">
                 AND user_id = #{userId}
@@ -91,19 +107,25 @@
     </select>
 
     <!-- 根据ID查询通知 -->
-    <select id="findById" resultType="com.konnac.pojo.Notification">
+    <select id="findById" resultMap="BaseResultMap">
         <include refid="commonSelect"></include>
         where id = #{id}
     </select>
 
+    <!-- 根据ID获取通知详情 -->
+    <select id="getById" resultMap="BaseResultMap">
+        <include refid="commonSelect"></include>
+        where id = #{notificationId}
+    </select>
+
     <!--批量添加通知-->
     <insert id="insertBatch" parameterType="list">
-        insert into notifications(user_id, title, content, type, related_type, related_id, is_read, created_at)
+        insert into notifications(user_id, title, content, type, related_type, related_id, active, is_read, created_at)
         values
         <foreach collection="notifications" item="notification" separator=",">
             (#{notification.userId}, #{notification.title}, #{notification.content},
             #{notification.type}, #{notification.relatedType}, #{notification.relatedId},
-            #{notification.isRead}, #{notification.createdAt})
+            1, #{notification.isRead}, #{notification.createdAt})
         </foreach>
     </insert>
 
@@ -112,7 +134,7 @@
         update notifications
         set active = false
        <where>
-           id = #{id}
+           id = #{notificationId}
            and user_id = #{userId}
        </where>
     </update>

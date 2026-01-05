@@ -3,6 +3,7 @@ package com.konnac.exception;
 import com.konnac.pojo.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -17,9 +18,9 @@ public class GlobalExceptionHandler {
      * 处理业务异常
      */
     @ExceptionHandler(BusinessException.class)
-    public Result handleBusinessException(BusinessException e, HttpServletRequest request) {
+    public ResponseEntity<Result> handleBusinessException(BusinessException e, HttpServletRequest request) {
         log.error("业务异常: {}, 请求路径: {}", e.getMessage(), request.getRequestURL(), e);
-        return Result.error(e.getMessage());
+        return ResponseEntity.status(e.getCode()).body(Result.error(e.getCode(), e.getMessage()));
     }
 
     /**

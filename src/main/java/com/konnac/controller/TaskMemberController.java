@@ -1,7 +1,7 @@
 package com.konnac.controller;
 
-
-
+import com.konnac.annotation.RequirePermission;
+import com.konnac.enums.PermissionType;
 import com.konnac.context.UserContext;
 import com.konnac.pojo.BatchResult;
 import com.konnac.pojo.PageBean;
@@ -16,18 +16,19 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/tasks/{taskId}/members")
+@RequestMapping("/projects/{projectId}/tasks/{taskId}/members")
 public class TaskMemberController {
     @Autowired
     private TaskMemberService taskMemberService;
 
-    //===========增删改项目成员=============
+    //===========增删改任务成员=============
     /**
      * 添加任务成员
      */
+    @RequirePermission(value = PermissionType.TASK_ASSIGN, checkTask = true)
     @PostMapping
-    public Result addTaskMember(@PathVariable Integer taskId, @RequestBody TaskMember taskMember){
-        log.info("添加任务成员，任务id：{}，任务成员信息：{}", taskId, taskMember);
+    public Result addTaskMember(@PathVariable Integer projectId, @PathVariable Integer taskId, @RequestBody TaskMember taskMember){
+        log.info("添加任务成员，项目id：{}，任务id：{}，任务成员信息：{}", projectId, taskId, taskMember);
         taskMemberService.addTaskMember(
                 taskId,
                 taskMember.getUserId(),
@@ -40,9 +41,10 @@ public class TaskMemberController {
     /**
      * 批量添加任务成员
      */
+    @RequirePermission(value = PermissionType.TASK_ASSIGN, checkTask = true)
     @PostMapping("/batch")
-    public Result addTaskMembers(@PathVariable Integer taskId, @RequestBody List<Integer> taskMembers){
-        log.info("批量添加任务成员，任务id：{}，任务成员id列表：{}", taskId, taskMembers);
+    public Result addTaskMembers(@PathVariable Integer projectId, @PathVariable Integer taskId, @RequestBody List<Integer> taskMembers){
+        log.info("批量添加任务成员，项目id：{}，任务id：{}，任务成员id列表：{}", projectId, taskId, taskMembers);
         // 调用Service，得到批量操作结果
         BatchResult batchResult = taskMemberService.addTaskMembers(taskId, taskMembers, UserContext.getCurrentUserId());
 
@@ -60,9 +62,11 @@ public class TaskMemberController {
     /**
      * 删除任务成员
      */
-    @DeleteMapping("/{userIds}")
-    public Result deleteTaskMembers(@PathVariable Integer taskId, List<Integer> userIds, Integer operatorId){
-        log.info("删除任务成员，任务id：{}，用户id：{}，操作人id：{}", taskId, userIds, operatorId);
+    @RequirePermission(value = PermissionType.TASK_ASSIGN, checkTask = true)
+    @DeleteMapping
+    public Result deleteTaskMembers(@PathVariable Integer projectId, @PathVariable Integer taskId, @RequestParam List<Integer> userIds){
+        Integer operatorId = UserContext.getCurrentUserId();
+        log.info("删除任务成员，项目id：{}，任务id：{}，用户id：{}，操作人id：{}", projectId, taskId, userIds, operatorId);
         taskMemberService.deleteTaskMembers(taskId, userIds, operatorId);
         return Result.success();
     }
@@ -70,9 +74,10 @@ public class TaskMemberController {
     /**
      * 更新任务成员角色
      */
+    @RequirePermission(value = PermissionType.TASK_UPDATE, checkTask = true)
     @PutMapping("/{userId}")
-    public Result updateMemberRole(@PathVariable Integer taskId, Integer userId, Integer operatorId, @RequestBody String newRole){
-        log.info("更新任务成员角色，任务id：{}，用户id：{}，新角色：{}，操作人id：{}", taskId, userId, newRole, operatorId);
+    public Result updateMemberRole(@PathVariable Integer projectId, @PathVariable Integer taskId, @PathVariable Integer userId, @RequestParam Integer operatorId, @RequestParam String newRole){
+        log.info("更新任务成员角色，项目id：{}，任务id：{}，用户id：{}，新角色：{}，操作人id：{}", projectId, taskId, userId, newRole, operatorId);
         taskMemberService.updateMemberRole(taskId, userId, newRole, operatorId);
         return Result.success();
     }
@@ -80,26 +85,29 @@ public class TaskMemberController {
     /**
      * 分页查询任务成员
      */
+    @RequirePermission(value = PermissionType.MEMBER_VIEW, checkProject = true)
     @RequestMapping("/{id}/assignable")
-    public Result page(@RequestParam(defaultValue = "1") Integer page,
-                       @RequestParam(defaultValue = "10") Integer pageSize,
+    public Result page(@PathVariable Integer projectId,
                        @PathVariable Integer taskId,
+                       @RequestParam(defaultValue = "1") Integer page,
+                       @RequestParam(defaultValue = "10") Integer pageSize,
                        @RequestParam(required = false) String name,
                        @RequestParam(required = false) String realName,
-                       @RequestParam(required = false) String userRole,
+                       @RequestParam(required = false) String taskRole,
                        @RequestParam(required = false) String department
                        ) {
-        log.info("获取任务成员列表，任务id：{}", taskId);
-        PageBean pageBean = taskMemberService.page(page, pageSize, taskId, name, realName, userRole, department);
+        log.info("获取任务成员列表，项目id：{}，任务id：{}", projectId, taskId);
+        PageBean pageBean = taskMemberService.page(page, pageSize, taskId, name, realName, taskRole, department);
         return Result.success(pageBean);
     }
 
     /**
      * 发送任务完成通知给任务成员
      */
+    @RequirePermission(value = PermissionType.MEMBER_VIEW, checkProject = true)
     @PostMapping("/{id}/")
-    public Result sendTaskCompleteNotice(@PathVariable Integer taskId){
-        log.info("发送任务完成通知给任务成员，任务id：{}", taskId);
+    public Result sendTaskCompleteNotice(@PathVariable Integer projectId, @PathVariable Integer taskId){
+        log.info("发送任务完成通知给任务成员，项目id：{}，任务id：{}", projectId, taskId);
         // 调用Service，得到批量操作结果
         BatchResult batchResult = taskMemberService.sendTaskCompleteNotification(taskId);
 
