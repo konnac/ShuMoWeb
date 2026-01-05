@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.ReportsMapper">
+
+    <sql id="commonSelect">
+        select r.id, r.user_id, r.user_name, r.report_type,
+               r.work_content, r.completed_tasks, r.next_plan, r.problems,
+               r.submit_time, r.update_time
+        from reports r
+    </sql>
+<!--添加报表-->
+    <insert id="addReport" useGeneratedKeys="true" keyProperty="id">
+        insert into reports(user_id, user_name, report_type,
+                           work_content, completed_tasks, next_plan, problems,
+                           submit_time, update_time)
+        VALUES (#{userId}, #{userName}, #{reportType},
+                #{workContent}, #{completedTasks}, #{nextPlan}, #{problems},
+                #{submitTime}, #{updateTime})
+    </insert>
+
+<!--修改报表-->
+    <update id="updateReport">
+        UPDATE reports
+        <set>
+            <if test="workContent != null">
+                work_content = #{workContent},
+            </if>
+            <if test="completedTasks != null">
+                completed_tasks = #{completedTasks},
+            </if>
+            <if test="nextPlan != null">
+                next_plan = #{nextPlan},
+            </if>
+            <if test="problems != null">
+                problems = #{problems},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+<!--分页条件查询报表-->
+    <select id="list" resultType="com.konnac.pojo.Report">
+        <include refid="commonSelect"></include>
+        <where>
+            <choose>
+                <!-- 管理员：查看所有报表 -->
+                <when test="userRole == 'ADMIN'">
+                    <if test="userId != null">
+                        and r.user_id = #{userId}
+                    </if>
+                </when>
+                <!-- 项目经理：查看自己负责项目成员的报表 -->
+                <when test="userRole == 'PROJECT_MANAGER'">
+                    AND r.user_id IN (
+                        SELECT pm.user_id
+                        FROM project_members pm
+                        JOIN projects p ON pm.project_id = p.id
+                        WHERE p.manager_id = #{currentUserId}
+                    )
+                    <if test="userId != null">
+                        and r.user_id = #{userId}
+                    </if>
+                </when>
+                <!-- 普通员工：只查看自己的报表 -->
+                <otherwise>
+                    AND r.user_id = #{currentUserId}
+                </otherwise>
+            </choose>
+            <if test="reportType != null">
+                and r.report_type = #{reportType}
+            </if>
+            <choose>
+                <when test="begin != null and end != null">
+                    AND r.submit_time BETWEEN #{begin} AND #{end}
+                </when>
+                <when test="begin != null">
+                    AND r.submit_time >= #{begin}
+                </when>
+                <when test="end != null">
+                    AND r.submit_time &lt;= #{end}
+                </when>
+            </choose>
+        </where>
+        ORDER BY r.submit_time DESC
+    </select>
+
+    <select id="getCompletedTasksByPeriod" resultType="com.konnac.pojo.Task">
+        SELECT t.id, t.title, t.description, t.status,
+               t.assignee_id as assigneeId, t.project_id as projectId, t.created_time as createdTime, t.update_time as updateTime,
+               p.name as projectName
+        FROM tasks t
+        LEFT JOIN projects p ON t.project_id = p.id
+        WHERE t.assignee_id = #{userId}
+          AND t.status = 'COMPLETED'
+          AND t.update_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY t.update_time DESC
+    </select>
+</mapper>

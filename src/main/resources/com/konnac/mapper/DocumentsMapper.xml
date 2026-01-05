@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.DocumentsMapper">
+
+    <sql id="commonSelect">
+        select d.id, d.project_id, d.file_name, d.file_url, d.file_size, d.file_type,
+               d.category, d.description, d.uploader_id, d.upload_time, d.update_time,
+               p.name as project_name, u.real_name as uploader_name
+        from documents d
+        left join projects p on d.project_id = p.id
+        left join users u on d.uploader_id = u.id
+    </sql>
+
+    <insert id="addDocument" useGeneratedKeys="true" keyProperty="id">
+        insert into documents(project_id, file_name, file_url, file_size, file_type,
+                              category, description, uploader_id, upload_time, update_time)
+        values (#{projectId}, #{fileName}, #{fileUrl}, #{fileSize}, #{fileType},
+                #{category}, #{description}, #{uploaderId}, #{uploadTime}, #{updateTime})
+    </insert>
+
+    <update id="updateDocument">
+        update documents
+        <set>
+            <if test="fileName != null and fileName.trim() != ''">
+                file_name = #{fileName},
+            </if>
+            <if test="category != null and category.trim() != ''">
+                category = #{category},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            update_time = #{updateTime},
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteDocument">
+        delete from documents where id = #{id}
+    </delete>
+
+    <delete id="deleteByProjectId">
+        delete from documents where project_id = #{projectId}
+    </delete>
+
+    <select id="getDocumentById" resultType="com.konnac.pojo.Document">
+        <include refid="commonSelect"/>
+        where d.id = #{id}
+    </select>
+
+    <select id="listByProjectId" resultType="com.konnac.pojo.Document">
+        <include refid="commonSelect"/>
+        <where>
+            d.project_id = #{projectId}
+            <if test="category != null and category.trim() != ''">
+                and d.category = #{category}
+            </if>
+            <if test="fileName != null and fileName.trim() != ''">
+                and d.file_name like concat('%', #{fileName}, '%')
+            </if>
+        </where>
+        order by d.upload_time desc
+    </select>
+
+    <select id="countByProjectId" resultType="long">
+        select count(*) from documents where project_id = #{projectId}
+    </select>
+
+    <select id="list" resultType="com.konnac.pojo.Document">
+        <include refid="commonSelect"/>
+        <where>
+            <if test="projectId != null">
+                and d.project_id = #{projectId}
+            </if>
+            <if test="fileType != null and fileType.trim() != ''">
+                and d.file_name like concat('%', #{fileType})
+            </if>
+            <if test="category != null">
+                and d.category = #{category}
+            </if>
+            <if test="fileName != null and fileName.trim() != ''">
+                and d.file_name like concat('%', #{fileName}, '%')
+            </if>
+            <if test="begin != null">
+                and d.upload_time &gt;= #{begin}
+            </if>
+            <if test="end != null">
+                and d.upload_time &lt;= #{end}
+            </if>
+        </where>
+        order by d.upload_time desc
+    </select>
+</mapper>
