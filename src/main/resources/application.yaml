@@ -18,14 +18,14 @@ spring:
 #允许的文件类型
 document:
   allowed-types: pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,png,zip,rar
-  temp-file-expire: 24
+
 
 #阿里云OSS配置
 aliyun:
   oss:
     endpoint: oss-cn-hangzhou.aliyuncs.com
-    access-key-id: your-key
-    access-key-secret: your-secret
+    access-key-id: ${ALIYUN_ACCESS_KEY_ID}
+    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET}
     bucket-name: web-konnac-management
     base-url: https://web-konnac-management.oss-cn-hangzhou.aliyuncs.com/
 
