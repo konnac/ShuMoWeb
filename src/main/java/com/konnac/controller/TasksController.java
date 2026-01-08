@@ -74,7 +74,8 @@ public class TasksController {
                    ){
                 log.info("分页查询项目任务, 项目id：{}，参数: page={}, pageSize={}, id={}, title={}, assigneeName={}, status={}, begin={}, end={}",
                         projectId, page, pageSize, id, title, assigneeName, status, begin, end);
-        PageBean pageBean = tasksService.page(page, pageSize, projectId, id, title, assigneeName, status, begin, end, com.konnac.utils.AuthUtils.getCurrentUserId());
+        Boolean isAdmin = com.konnac.utils.AuthUtils.getCurrentUser().getRole() == com.konnac.pojo.User.UserRole.ADMIN;
+        PageBean pageBean = tasksService.page(page, pageSize, projectId, id, title, assigneeName, status, begin, end, com.konnac.utils.AuthUtils.getCurrentUserId(), isAdmin);
         return Result.success(pageBean);
     }
 }

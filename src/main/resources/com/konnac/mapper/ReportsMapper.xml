@@ -93,7 +93,7 @@
                p.name as projectName
         FROM tasks t
         LEFT JOIN projects p ON t.project_id = p.id
-        WHERE t.assignee_id = #{userId}
+        WHERE t.id IN (SELECT tm.task_id FROM task_members tm WHERE tm.user_id = #{userId} AND tm.status = 'ACTIVE')
           AND t.status = 'COMPLETED'
           AND t.update_time BETWEEN #{startTime} AND #{endTime}
         ORDER BY t.update_time DESC

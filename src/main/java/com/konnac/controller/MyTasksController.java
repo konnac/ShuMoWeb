@@ -31,11 +31,12 @@ public class MyTasksController {
                        @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end) {
         Integer currentUserId = AuthUtils.getCurrentUserId();
         String userRole = AuthUtils.getCurrentUser().getRole().name();
+        Boolean isAdmin = AuthUtils.getCurrentUser().getRole() == com.konnac.pojo.User.UserRole.ADMIN;
 
         log.info("分页查询我的任务, 参数: page={}, pageSize={}, projectId={}, id={}, title={}, assigneeName={}, status={}, begin={}, end={}, currentUserId={}, userRole={}",
                 page, pageSize, projectId, id, title, assigneeName, status, begin, end, currentUserId, userRole);
 
-        PageBean pageBean = tasksService.pageMyTasks(page, pageSize, projectId, id, title, assigneeName, status, begin, end, currentUserId, userRole);
+        PageBean pageBean = tasksService.pageMyTasks(page, pageSize, projectId, id, title, assigneeName, status, begin, end, currentUserId, userRole, isAdmin);
         return Result.success(pageBean);
     }
 }

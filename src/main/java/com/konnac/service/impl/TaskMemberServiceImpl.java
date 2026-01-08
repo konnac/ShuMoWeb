@@ -54,6 +54,17 @@ public class TaskMemberServiceImpl implements TaskMemberService {
             throw new BusinessException("要添加任务的用户不存在");
         }
 
+        //3.如果添加的是负责人，检查任务是否已有负责人
+        if ("ASSIGNEE".equals(taskRole)) {
+            List<TaskMember> existingMembers = tasksMemberMapper.findActiveByTaskId(taskId);
+            for (TaskMember member : existingMembers){
+                if ("ASSIGNEE".equals(member.getTaskRole())) {
+                    throw new BusinessException("任务只能有一个负责人");
+                }
+            }
+        }
+
+
         TaskMember taskMember = tasksMemberMapper.getMemberByTaskIdAndUserId(taskId, userId);
         if (taskMember != null) {
             if (taskMember.getStatus() == TaskMember.MemberStatus.INACTIVE) {
@@ -171,12 +182,60 @@ public class TaskMemberServiceImpl implements TaskMemberService {
             log.warn("任务成员不存在: taskId={}, userId={}", taskId, userId);
             throw new BusinessException("任务成员不存在");
         }
+
+        //如果修改为负责人，检查任务是否已有其他负责人
+        if ("ASSIGNEE".equals(newTaskRole) && !"ASSIGNEE".equals(taskMember.getTaskRole())) {
+            List<TaskMember> existingMembers = tasksMemberMapper.findActiveByTaskId(taskId);
+            for (TaskMember member : existingMembers) {
+                if ("ASSIGNEE".equals(member.getTaskRole()) && !member.getUserId().equals(userId)) {
+                    throw new BusinessException("任务只能有一个负责人，请先修改现有负责人的角色");
+                }
+            }
+        }
+
         taskMember.setTaskRole(newTaskRole);
         tasksMemberMapper.updateTaskMember(taskMember);
 
         log.info("更新任务成员角色成功: taskId={}, userId={}, newTaskRole={}, operatorId={}", taskId, userId, newTaskRole, operatorId);
 
         notificationService.sendUpdateTaskMemberRoleNotification(taskId, userId, operatorId, TaskRole.valueOf(newTaskRole));
+    }
+
+    /**
+     * 激活任务成员
+     */
+    @RequirePermission(value = PermissionType.TASK_UPDATE, checkTask = true)
+    @Override
+    public void activateMember(Integer taskId, Integer userId, Integer operatorId) {
+        log.debug("激活任务成员: taskId={}, userId={}, operatorId={}", taskId, userId, operatorId);
+        
+        Task task = tasksMapper.getTaskById(taskId);
+        if (task == null) {
+            log.warn("任务不存在: taskId={}", taskId);
+            throw new BusinessException("任务不存在");
+        }
+        
+        if (task.getStatus() == Task.TaskStatus.CANCELLED) {
+            log.warn("任务已取消，不能激活成员: taskId={}", taskId);
+            throw new BusinessException("任务已取消，不能激活成员");
+        }
+        
+        TaskMember taskMember = tasksMemberMapper.getMemberByTaskIdAndUserId(taskId, userId);
+        if (taskMember == null) {
+            log.warn("任务成员不存在: taskId={}, userId={}", taskId, userId);
+            throw new BusinessException("任务成员不存在");
+        }
+
+        if (taskMember.getStatus() == TaskMember.MemberStatus.ACTIVE) {
+            log.warn("任务成员已经是激活状态: taskId={}, userId={}", taskId, userId);
+            throw new BusinessException("任务成员已经是激活状态");
+        }
+
+        taskMember.setStatus(TaskMember.MemberStatus.ACTIVE);
+        taskMember.setUpdateTime(LocalDateTime.now());
+        tasksMemberMapper.updateTaskMember(taskMember);
+
+        log.info("激活任务成员成功: taskId={}, userId={}, operatorId={}", taskId, userId, operatorId);
     }
 
     /**
@@ -191,7 +250,7 @@ public class TaskMemberServiceImpl implements TaskMemberService {
             throw new BusinessException("任务不存在");
         }
         //获取任务成员列表
-        List<TaskMember> taskMembers = tasksMemberMapper.list(taskId, null, null, null, null);
+        List<TaskMember> taskMembers = tasksMemberMapper.list(taskId, null, null, null, null, false);
 
         if (taskMembers == null || taskMembers.isEmpty()) {
             log.warn("任务成员列表为空: taskId={}", taskId);
@@ -230,8 +289,9 @@ public class TaskMemberServiceImpl implements TaskMemberService {
                          String name,
                          String realName,
                          String taskRole,
-                         String department) {
-        PageInfo<TaskMember> pageInfo = PageHelperUtils.safePageQuery(page, pageSize, () -> tasksMemberMapper.list(taskId, name, realName, taskRole, department));
+                         String department,
+                         Boolean isAdmin) {
+        PageInfo<TaskMember> pageInfo = PageHelperUtils.safePageQuery(page, pageSize, () -> tasksMemberMapper.list(taskId, name, realName, taskRole, department, isAdmin));
         return new PageBean(pageInfo.getTotal(), pageInfo.getList());
     }
 }

@@ -83,6 +83,18 @@ public class TaskMemberController {
     }
 
     /**
+     * 激活任务成员
+     */
+    @RequirePermission(value = PermissionType.TASK_UPDATE, checkTask = true)
+    @PutMapping("/{userId}/activate")
+    public Result activateMember(@PathVariable Integer projectId, @PathVariable Integer taskId, @PathVariable Integer userId){
+        Integer operatorId = UserContext.getCurrentUserId();
+        log.info("激活任务成员，项目id：{}，任务id：{}，用户id：{}，操作人id：{}", projectId, taskId, userId, operatorId);
+        taskMemberService.activateMember(taskId, userId, operatorId);
+        return Result.success();
+    }
+
+    /**
      * 分页查询任务成员
      */
     @RequirePermission(value = PermissionType.MEMBER_VIEW, checkProject = true)
@@ -97,7 +109,8 @@ public class TaskMemberController {
                        @RequestParam(required = false) String department
                        ) {
         log.info("获取任务成员列表，项目id：{}，任务id：{}", projectId, taskId);
-        PageBean pageBean = taskMemberService.page(page, pageSize, taskId, name, realName, taskRole, department);
+        Boolean isAdmin = com.konnac.utils.AuthUtils.getCurrentUser().getRole() == com.konnac.pojo.User.UserRole.ADMIN;
+        PageBean pageBean = taskMemberService.page(page, pageSize, taskId, name, realName, taskRole, department, isAdmin);
         return Result.success(pageBean);
     }
 

@@ -87,6 +87,6 @@ public interface ProjectsMapper {
     @Select("SELECT COUNT(DISTINCT p.id) FROM projects p " +
             "WHERE (p.manager_id = #{userId} " +
             "OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = #{userId})) " +
-            "AND p.status = 'IN_PROGRESS'")
+            "AND p.status IN ('IN_PROGRESS', 'DELAYED')")
     long getUserActiveProjectCount(Integer userId);
 }

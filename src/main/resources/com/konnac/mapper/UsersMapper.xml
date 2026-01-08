@@ -12,9 +12,9 @@
     <!-- 新增员工 -->
     <insert id="addUser" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO users (
-            username, password, role, real_name, email, created_time, update_time
+            username, password, role, real_name, email, phone, avatar, created_time, update_time
         ) VALUES (
-                     #{username}, #{password}, #{role}, #{realName}, #{email}, #{createdTime}, #{updateTime}
+                     #{username}, #{password}, #{role}, #{realName}, #{email}, #{phone}, #{avatar}, #{createdTime}, #{updateTime}
                  )
     </insert>
 
@@ -96,6 +96,12 @@
             </if>
             <if test="role != null">
                 AND role = #{role}
+            </if>
+            <if test="excludeRoles != null and excludeRoles.size() > 0">
+                AND role NOT IN
+                <foreach collection="excludeRoles" item="excludeRole" separator="," open="(" close=")">
+                    #{excludeRole}
+                </foreach>
             </if>
             <!-- 时间范围查询 -->
             <choose>

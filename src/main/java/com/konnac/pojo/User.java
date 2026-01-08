@@ -16,6 +16,7 @@ public class User {
     private String username;// 用户名
     private String realName;// 真实姓名
     private String password;// 密码
+    private String oldPassword;// 旧密码（用于修改密码）
     private String avatar; //头像
     private UserRole role; // ADMIN, PROJECT_MANAGER, EMPLOYEE
     private String email; //要做邮箱验证

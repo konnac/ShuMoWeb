@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -31,10 +30,43 @@ public class AliyunOSSUtil {
      * 上传文件
      */
     public String uploadFile(MultipartFile file) throws IOException {
+        log.info("开始上传文件到OSS: {}", file.getOriginalFilename());
+        
         String originalFilename = file.getOriginalFilename();
         String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
 
         String fileName = generateFileName(extension);
+        log.info("生成的文件名: {}", fileName);
+
+        InputStream inputStream = file.getInputStream();
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(file.getSize());
+        metadata.setContentType(file.getContentType());
+
+        PutObjectRequest putObjectRequest = new PutObjectRequest(
+                aliyunOSSConfig.getBucketName(),
+                fileName,
+                inputStream,
+                metadata
+        );
+
+        log.info("开始上传到OSS Bucket: {}", aliyunOSSConfig.getBucketName());
+        ossClient.putObject(putObjectRequest);
+        
+        String fileUrl = aliyunOSSConfig.getBaseUrl() + fileName;
+        log.info("文件上传成功，完整URL: {}", fileUrl);
+        
+        return fileUrl;
+    }
+
+    /**
+     * 上传项目文件
+     */
+    public String uploadFileToProject(MultipartFile file, Integer projectId) throws IOException {
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+
+        String fileName = generateProjectFileName(projectId, extension);
 
         InputStream inputStream = file.getInputStream();
         ObjectMetadata metadata = new ObjectMetadata();
@@ -54,13 +86,13 @@ public class AliyunOSSUtil {
     }
 
     /**
-     * 上传项目文件
+     * 上传项目文件（带分类）
      */
-    public String uploadFileToProject(MultipartFile file, Integer projectId) throws IOException {
+    public String uploadFileToProject(MultipartFile file, Integer projectId, String category) throws IOException {
         String originalFilename = file.getOriginalFilename();
         String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
 
-        String fileName = generateProjectFileName(projectId, extension);
+        String fileName = generateProjectFileNameWithCategory(projectId, category, extension);
 
         InputStream inputStream = file.getInputStream();
         ObjectMetadata metadata = new ObjectMetadata();
@@ -110,16 +142,17 @@ public class AliyunOSSUtil {
     }
 
     private String generateFileName(String extension) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-        String datePath = sdf.format(new Date());
         String uuid = UUID.randomUUID().toString().replace("-", "");
-        return datePath + "/" + uuid + extension;
+        return "avatar/" + uuid + extension;
     }
 
     private String generateProjectFileName(Integer projectId, String extension) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-        String datePath = sdf.format(new Date());
         String uuid = UUID.randomUUID().toString().replace("-", "");
-        return "projects/" + projectId + "/" + datePath + "/" + uuid + extension;
+        return projectId + "/" + uuid + extension;
+    }
+
+    private String generateProjectFileNameWithCategory(Integer projectId, String category, String extension) {
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        return projectId + "/" + category + "/" + uuid + extension;
     }
 }

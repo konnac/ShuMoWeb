@@ -34,7 +34,7 @@ public interface ProjectsMemberService {
     /**
      * 分页查询项目成员
      */
-    PageBean page(Integer page, Integer pageSize, Integer projectId, String name, String realName, String userRole, String department);
+    PageBean page(Integer page, Integer pageSize, Integer projectId, String name, String realName, String userRole, String department, Boolean isAdmin);
 
     /**
      * 获取项目成员列表
@@ -65,4 +65,9 @@ public interface ProjectsMemberService {
      * 获取项目成员统计
      */
     Map<String, Integer> getProjectMemberStats(Integer projectId);
+
+    /**
+     * 激活项目成员
+     */
+    void activateMember(Integer projectId, Integer userId, Integer operatorId);
 }

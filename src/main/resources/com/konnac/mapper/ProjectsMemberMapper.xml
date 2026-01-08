@@ -78,7 +78,9 @@
             <if test="department != null and department != ''">
                 and u.department like concat('%', #{department}, '%')
             </if>
-            and pm.status = 'ACTIVE'
+            <if test="isAdmin == null or isAdmin == false">
+                and pm.status = 'ACTIVE'
+            </if>
         </where>
         Order by pm.id desc
     </select>
@@ -95,6 +97,15 @@
         where project_id = #{projectId}
         and status = 'ACTIVE'
     </select>
+
+<!--批量禁用项目成员-->
+    <update id="disableMembersByProjectId">
+        UPDATE project_members
+        SET status = 'INACTIVE',
+            updated_time = NOW()
+        WHERE project_id = #{projectId}
+          AND status = 'ACTIVE'
+    </update>
 
 
 </mapper>

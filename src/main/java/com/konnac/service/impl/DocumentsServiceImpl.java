@@ -49,12 +49,13 @@ public class DocumentsServiceImpl implements DocumentsService {
             throw new BusinessException("项目不存在");
         }
 
-        ProjectMember member = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, uploaderId);
-        if (member == null && !project.getManagerId().equals(uploaderId)) {
-            throw new BusinessException("您不是该项目的成员，无法上传文档");
-        }
+//        ProjectMember member = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, uploaderId);
+//        if (member == null && !project.getManagerId().equals(uploaderId)) {
+//            throw new BusinessException("您不是该项目的成员，无法上传文档");
+//        }
 
-        String fileUrl = aliyunOSSUtil.uploadFileToProject(file, projectId);
+        Document.DocumentCategory docCategory = category != null && !category.trim().isEmpty() ? Document.DocumentCategory.valueOf(category) : Document.DocumentCategory.OTHER;
+        String fileUrl = aliyunOSSUtil.uploadFileToProject(file, projectId, docCategory.toString());
 
         Document document = new Document();
         document.setProjectId(projectId);
@@ -62,7 +63,7 @@ public class DocumentsServiceImpl implements DocumentsService {
         document.setFileUrl(fileUrl);
         document.setFileSize(file.getSize());
         document.setFileType(file.getContentType());
-        document.setCategory(category != null && !category.trim().isEmpty() ? Document.DocumentCategory.valueOf(category) : Document.DocumentCategory.OTHER);
+        document.setCategory(docCategory);
         document.setDescription(description);
         document.setUploaderId(uploaderId);
         document.setUploadTime(LocalDateTime.now());
@@ -84,10 +85,10 @@ public class DocumentsServiceImpl implements DocumentsService {
             throw new BusinessException("文档不存在");
         }
 
-        Project project = projectsMapper.getProjectById(document.getProjectId());
-        if (!project.getManagerId().equals(uploaderId) && !document.getUploaderId().equals(uploaderId)) {
-            throw new BusinessException("您没有权限修改该文档");
-        }
+//        Project project = projectsMapper.getProjectById(document.getProjectId());
+//        if (!project.getManagerId().equals(uploaderId) && !document.getUploaderId().equals(uploaderId)) {
+//            throw new BusinessException("您没有权限修改该文档");
+//        }
 
         document.setFileName(fileName);
         document.setCategory(category != null && !category.trim().isEmpty() ? Document.DocumentCategory.valueOf(category) : document.getCategory());

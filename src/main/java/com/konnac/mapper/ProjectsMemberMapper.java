@@ -30,5 +30,8 @@ public interface ProjectsMemberMapper {
     List<Integer> getProjectMembersIds(Integer projectId);
 
     //分页获取项目成员
-    List<ProjectMember> list(Integer projectId, String name, String realName, String userRole, String department);
+    List<ProjectMember> list(Integer projectId, String name, String realName, String userRole, String department, Boolean isAdmin);
+
+    //批量禁用项目成员
+    void disableMembersByProjectId(Integer projectId);
 }

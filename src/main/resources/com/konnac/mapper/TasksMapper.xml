@@ -5,7 +5,8 @@
 <mapper namespace="com.konnac.mapper.TasksMapper">
 
     <sql id="commonSelect">
-        select t.id, t.project_id, p.name as project_name, t.title, t.description, t.assignee_id,
+        select t.id, t.project_id, p.name as project_name, t.title, t.description,
+               t.assignee_id,
                u.real_name as assignee_name,
                t.estimated_hours, t.actual_hours, t.deadline, t.status,
                t.created_time, t.update_time
@@ -13,6 +14,12 @@
         left join projects p on t.project_id = p.id
         left join users u on t.assignee_id = u.id
     </sql>
+
+    <select id="getTaskById" resultType="com.konnac.pojo.Task">
+        <include refid="commonSelect"></include>
+        where t.id = #{id}
+    </select>
+
 <!--新增任务-->
     <insert id="addTask" useGeneratedKeys="true" keyProperty="id">
         insert into tasks(project_id, title, description, assignee_id, estimated_hours,
@@ -55,22 +62,42 @@
 <!--查询未完成的任务树-->
     <select id="getUncompletedTaskCountByProjectIdAndUserId" resultType="int">
         select count(*)
-        from tasks
-        where project_id = #{projectId}
-          and assignee_id = #{userId}
-          and status != 'completed'
+        from tasks t
+        left join task_members tm on t.id = tm.task_id and tm.task_role = 'ASSIGNEE' and tm.status = 'ACTIVE'
+        where t.project_id = #{projectId}
+          and tm.user_id = #{userId}
+          and t.status NOT IN ('COMPLETED', 'CANCELLED')
     </select>
 
     <!-- 分页查询（项目经理和普通员工：查看自己所在项目的任务） -->
     <select id="list" resultType="com.konnac.pojo.Task">
-        <include refid="commonSelect"></include>
-        LEFT JOIN project_members pm ON t.project_id = pm.project_id
+        select DISTINCT t.id, t.project_id, p.name as project_name, t.title, t.description,
+               t.assignee_id,
+               u.real_name as assignee_name,
+               t.estimated_hours, t.actual_hours, t.deadline, t.status,
+               t.created_time, t.update_time
+        from tasks t
+        left join projects p on t.project_id = p.id
+        left join users u on t.assignee_id = u.id
         <where>
-            <!-- 用户参与条件：用户是项目经理 或者 是项目成员 -->
-            AND (
-            t.project_id IN (SELECT id FROM projects WHERE manager_id = #{currentUserId})
-            OR (pm.user_id = #{currentUserId} AND pm.status = 'ACTIVE')
-            )
+            <!-- 用户参与条件：用户是项目经理 或者 是项目成员 或者 是任务成员 -->
+            <if test="currentUserId != null">
+                AND (
+                t.project_id IN (SELECT id FROM projects WHERE manager_id = #{currentUserId})
+                OR EXISTS (
+                    SELECT 1 FROM project_members pm 
+                    WHERE pm.project_id = t.project_id 
+                    AND pm.user_id = #{currentUserId} 
+                    AND pm.status = 'ACTIVE'
+                )
+                OR EXISTS (
+                    SELECT 1 FROM task_members tm 
+                    WHERE tm.task_id = t.id 
+                    AND tm.user_id = #{currentUserId} 
+                    AND tm.status = 'ACTIVE'
+                )
+                )
+            </if>
             <if test="projectId != null">
                 and t.project_id = #{projectId}
             </if>
@@ -81,7 +108,10 @@
                 and t.title like concat('%', #{title}, '%')
             </if>
             <if test="assigneeName != null and assigneeName.trim() != ''">
-                and t.assignee_id in (select id from users where real_name like concat('%', #{assigneeName}, '%'))
+                and t.id in (select tm.task_id from task_members tm
+                             left join users u on tm.user_id = u.id
+                             where tm.task_role = 'ASSIGNEE' and tm.status = 'ACTIVE'
+                             and u.real_name like concat('%', #{assigneeName}, '%'))
             </if>
             <if test="status != null">
                 and t.status = #{status}
@@ -101,7 +131,6 @@
                 </when>
             </choose>
         </where>
-        GROUP BY t.id
         ORDER BY t.created_time DESC
     </select>
 
@@ -119,13 +148,13 @@
                 and t.title like concat('%', #{title}, '%')
             </if>
             <if test="assigneeName != null and assigneeName.trim() != ''">
-                and t.assignee_id in (select id from users where real_name like concat('%', #{assigneeName}, '%'))
+                and t.id in (select tm.task_id from task_members tm
+                             left join users u on tm.user_id = u.id
+                             where tm.task_role = 'ASSIGNEE' and tm.status = 'ACTIVE'
+                             and u.real_name like concat('%', #{assigneeName}, '%'))
             </if>
             <if test="status != null">
                 and t.status = #{status}
-            </if>
-            <if test="status == null">
-                and t.status != 'CANCELLED'
             </if>
             <choose>
                 <when test="begin != null and end != null">
@@ -151,6 +180,15 @@
                          'DELAY')
     </select>
 
+    <!--批量取消项目下的所有任务-->
+    <update id="cancelTasksByProjectId">
+        UPDATE tasks
+        SET status = 'CANCELLED',
+            update_time = NOW()
+        WHERE project_id = #{projectId}
+          AND status IN ('NOT_STARTED', 'IN_PROGRESS', 'DELAY')
+    </update>
+
     <!-- 查询"我的任务" - 根据用户角色返回不同的任务列表 -->
     <select id="listMyTasks" resultType="com.konnac.pojo.Task">
         <include refid="commonSelect"></include>
@@ -169,9 +207,9 @@
                         and t.project_id = #{projectId}
                     </if>
                 </when>
-                <!-- 普通员工：只查看自己负责的任务 -->
+                <!-- 普通员工：查看自己作为负责人或协作者参与的任务 -->
                 <otherwise>
-                    AND t.assignee_id = #{currentUserId}
+                    AND t.id IN (SELECT tm.task_id FROM task_members tm WHERE tm.user_id = #{currentUserId} AND tm.status = 'ACTIVE')
                     <if test="projectId != null">
                         and t.project_id = #{projectId}
                     </if>
@@ -184,12 +222,15 @@
                 and t.title like concat('%', #{title}, '%')
             </if>
             <if test="assigneeName != null and assigneeName.trim() != ''">
-                and t.assignee_id in (select id from users where real_name like concat('%', #{assigneeName}, '%'))
+                and t.id in (select tm.task_id from task_members tm
+                             left join users u on tm.user_id = u.id
+                             where tm.task_role = 'ASSIGNEE' and tm.status = 'ACTIVE'
+                             and u.real_name like concat('%', #{assigneeName}, '%'))
             </if>
             <if test="status != null">
                 and t.status = #{status}
             </if>
-            <if test="status == null">
+            <if test="status == null and userRole != 'ADMIN'">
                 and t.status != 'CANCELLED'
             </if>
             <choose>

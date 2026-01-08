@@ -13,7 +13,6 @@ public interface TasksMapper {
     void addTask(Task task);
 
     //根据id查询任务
-    @Select("select * from tasks where id = #{id}")
     Task getTaskById(Integer id);
 
     //修改任务
@@ -25,6 +24,9 @@ public interface TasksMapper {
     //查询一个项目中未完成的任务数
     int getUncompletedTaskCountByProjectId(Integer projectId);
 
+    //批量取消项目下的所有任务
+    void cancelTasksByProjectId(Integer projectId);
+
     //分页查询所有任务（管理员）
     List<Task> listAll(Integer projectId,
                        Integer Id,
@@ -32,7 +34,8 @@ public interface TasksMapper {
                        String assigneeName,
                        Task.TaskStatus status,
                        LocalDate begin,
-                       LocalDate end);
+                       LocalDate end,
+                       Boolean isAdmin);
 
     //分页查询（项目经理和普通员工：查看自己所在项目的任务）
     List<Task> list(Integer projectId,
@@ -42,7 +45,8 @@ public interface TasksMapper {
                     Task.TaskStatus status,
                     LocalDate begin,
                     LocalDate end,
-                    Integer currentUserId);
+                    Integer currentUserId,
+                    Boolean isAdmin);
 
     /**
      * 获取任务数量
@@ -75,6 +79,18 @@ public interface TasksMapper {
     double getUserTotalHours(Integer userId);
 
     /**
+     * 获取项目经理负责项目下的任务总数
+     */
+    @Select("SELECT COUNT(*) FROM tasks t WHERE t.project_id IN (SELECT id FROM projects WHERE manager_id = #{userId})")
+    long getManagerTaskCount(Integer userId);
+
+    /**
+     * 获取项目经理负责项目下的任务状态统计
+     */
+    @Select("SELECT status, COUNT(*) as count FROM tasks t WHERE t.project_id IN (SELECT id FROM projects WHERE manager_id = #{userId}) GROUP BY status")
+    List<Map<String, Object>> getManagerTaskStats(Integer userId);
+
+    /**
      * 查询"我的任务" - 根据用户角色返回不同的任务列表
      * 管理员：所有任务
      * 项目经理：自己负责的项目下的所有任务
@@ -88,5 +104,6 @@ public interface TasksMapper {
                            LocalDate begin,
                            LocalDate end,
                            Integer currentUserId,
-                           String userRole);
+                           String userRole,
+                           Boolean isAdmin);
 }

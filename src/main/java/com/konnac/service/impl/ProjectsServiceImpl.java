@@ -10,6 +10,7 @@ import com.konnac.mapper.ProjectsMapper;
 import com.konnac.mapper.TasksMapper;
 import com.konnac.mapper.UsersMapper;
 import com.konnac.mapper.ProjectsMemberMapper;
+import com.konnac.mapper.TasksMemberMapper;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Project;
 import com.konnac.pojo.ProjectMember;
@@ -41,6 +42,9 @@ public class ProjectsServiceImpl implements ProjectsService {
 
     @Autowired
     private ProjectsMemberMapper projectsMemberMapper;
+
+    @Autowired
+    private TasksMemberMapper tasksMemberMapper;
 
 //===============增删改项目==============
 
@@ -130,20 +134,28 @@ public class ProjectsServiceImpl implements ProjectsService {
                     throw new BusinessException("项目id:" + id + ",项目不存在");
                 }
 
-                //  3.验证项目中是否有未完成的任务
-                if (tasksMapper.getUncompletedTaskCountByProjectId(id) > 0) {
-                    log.warn("项目id：{}，项目下有未完成的任务，不能删除", id);
-                    throw new BusinessException("项目id:" + id + ",项目下有未完成的任务，不能删除");
-                }
-                //  3.删除项目
+                //  3.取消项目下所有任务
+                tasksMapper.cancelTasksByProjectId(id);
+                log.info("取消项目下所有任务成功，项目id：{}", id);
+
+                //  4.禁用项目成员
+                projectsMemberMapper.disableMembersByProjectId(id);
+                log.info("禁用项目成员成功，项目id：{}", id);
+
+                //  5.禁用任务成员
+                tasksMemberMapper.disableTaskMembersByProjectId(id);
+                log.info("禁用任务成员成功，项目id：{}", id);
+
+                //  6.删除项目（软删除）
                 project.setStatus(Project.ProjectStatus.TERMINATED);
                 project.setUpdateTime(LocalDateTime.now());
                 projectsMapper.updateProject(project);
+                log.info("删除项目成功，项目id：{}", id);
 
             } catch (BusinessException e){
                 throw e;
             } catch (Exception e) {
-                log.warn("验证权限失败，项目id：{}", id);
+                log.warn("删除项目失败，项目id：{}", id, e);
                 throw new BusinessException("删除项目失败" + e.getMessage(), e);
             }
         }
@@ -164,13 +176,17 @@ public class ProjectsServiceImpl implements ProjectsService {
                 throw new BusinessException("项目id:" + project.getId() + ",项目不存在");
             }
 
-            // 3.验证项目状态：已取消的项目不允许修改
+            // 3.验证项目状态：已取消的项目只能修改状态来恢复项目
+            boolean isRestoringTerminatedProject = false;
             if (Project.ProjectStatus.TERMINATED.equals(existingProject.getStatus())) {
-                throw new BusinessException("项目已取消，不允许修改");
+                if (project.getStatus() == null || Project.ProjectStatus.TERMINATED.equals(project.getStatus())) {
+                    throw new BusinessException("项目已取消，只能修改状态来恢复项目");
+                }
+                isRestoringTerminatedProject = true;
             }
 
-            // 4.验证项目名称是否重复（如果修改了名称）
-            if (project.getName() != null && !project.getName().trim().isEmpty()) {
+            // 4.验证项目名称是否重复（如果修改了名称）- 恢复项目时跳过
+            if (!isRestoringTerminatedProject && project.getName() != null && !project.getName().trim().isEmpty()) {
                 Project sameNameProject = projectsMapper.getProjectByName(project.getName());
                 // 如果存在同名项目，且不是当前项目
                 if (sameNameProject != null && !sameNameProject.getId().equals(project.getId())) {
@@ -178,8 +194,8 @@ public class ProjectsServiceImpl implements ProjectsService {
                 }
             }
 
-            // 5.验证项目经理是否存在（如果修改了项目经理）
-            if (project.getManagerId() != null) {
+            // 5.验证项目经理是否存在（如果修改了项目经理）- 恢复项目时跳过
+            if (!isRestoringTerminatedProject && project.getManagerId() != null) {
                 User manager = usersMapper.getUserById(project.getManagerId());
                 if (manager == null) {
                     throw new BusinessException("项目经理不存在");
@@ -187,6 +203,43 @@ public class ProjectsServiceImpl implements ProjectsService {
                 // 验证项目经理角色（可选）
                 if (!User.UserRole.PROJECT_MANAGER.equals(manager.getRole())) {
                     throw new BusinessException("指定的用户不是项目经理");
+                }
+            }
+
+            // 5.5.如果修改了项目经理，需要更新项目成员表 - 恢复项目时跳过
+            if (!isRestoringTerminatedProject && project.getManagerId() != null && !project.getManagerId().equals(existingProject.getManagerId())) {
+                // 移除旧的项目经理角色（软删除）
+                if (existingProject.getManagerId() != null) {
+                    ProjectMember oldManagerMember = projectsMemberMapper.getMemberByProjectIdAndUserId(project.getId(), existingProject.getManagerId());
+                    if (oldManagerMember != null && "PROJECT_MANAGER".equals(oldManagerMember.getProjectRole())) {
+                        // 将旧项目经理软删除
+                        oldManagerMember.setStatus(ProjectMember.MemberStatus.INACTIVE);
+                        oldManagerMember.setUpdateTime(LocalDateTime.now());
+                        projectsMemberMapper.updateProjectMember(oldManagerMember);
+                        log.info("软删除旧项目经理，项目id：{}，旧项目经理id：{}", project.getId(), existingProject.getManagerId());
+                    }
+                }
+
+                // 为新项目经理设置角色
+                ProjectMember newManagerMember = projectsMemberMapper.getMemberByProjectIdAndUserId(project.getId(), project.getManagerId());
+                if (newManagerMember != null) {
+                    // 如果新项目经理已经是项目成员，更新其角色
+                    newManagerMember.setProjectRole("PROJECT_MANAGER");
+                    newManagerMember.setStatus(ProjectMember.MemberStatus.ACTIVE);
+                    newManagerMember.setUpdateTime(LocalDateTime.now());
+                    projectsMemberMapper.updateProjectMember(newManagerMember);
+                    log.info("更新新项目经理角色，项目id：{}，新项目经理id：{}", project.getId(), project.getManagerId());
+                } else {
+                    // 如果新项目经理不是项目成员，添加为项目经理
+                    ProjectMember projectMember = new ProjectMember();
+                    projectMember.setProjectId(project.getId());
+                    projectMember.setUserId(project.getManagerId());
+                    projectMember.setProjectRole("PROJECT_MANAGER");
+                    projectMember.setJoinBy(operatorId);
+                    projectMember.setStatus(ProjectMember.MemberStatus.ACTIVE);
+                    projectMember.setJoinDate(LocalDateTime.now());
+                    projectsMemberMapper.addProjectMember(projectMember);
+                    log.info("添加新项目经理为项目成员，项目id：{}，新项目经理id：{}", project.getId(), project.getManagerId());
                 }
             }
 
@@ -244,8 +297,8 @@ public class ProjectsServiceImpl implements ProjectsService {
                             description,
                             priority,
                             status,
-                            begin,  // 注意：这里需要与 Mapper 参数名匹配
-                            end     // 注意：这里需要与 Mapper 参数名匹配
+                            begin,
+                            end
                     )
             );
             log.info("分页查询项目成功，结果：{}", pageBean);

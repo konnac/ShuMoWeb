@@ -179,7 +179,16 @@ public class PermissionAspect {
                 String[] parts = uri.split("/");
                 for (int i = 0; i < parts.length; i++) {
                     if ("projects".equals(parts[i]) && i + 1 < parts.length) {
-                        return extractInteger(parts[i + 1]);
+                        String idStr = parts[i + 1];
+                        // 处理批量删除的情况（逗号分隔的IDs）
+                        if (idStr.contains(",")) {
+                            // 批量删除时，返回第一个ID用于权限检查
+                            String[] ids = idStr.split(",");
+                            if (ids.length > 0) {
+                                return extractInteger(ids[0]);
+                            }
+                        }
+                        return extractInteger(idStr);
                     }
                 }
             }
@@ -316,13 +325,16 @@ public class PermissionAspect {
                 // 任务权限(项目内成员)
                 case TASK_ADD:
                     if (projectId == null) return false;
-                    return checkNomalMemberPermission(projectId, userId);
+                    return checkProjectManagerPermission(projectId, userId);
                 case TASK_UPDATE:
                 case TASK_DELETE:
                 case TASK_ASSIGN:
                     if (taskId == null) return false;
                     // 任务负责人或项目经理都可以操作
-                    return checkTaskLeaderPermission(taskId, userId) || checkProjectManagerPermissionByTaskId(taskId, userId);
+                    if(checkProjectManagerPermissionByTaskId(taskId, userId)){
+                        return true;
+                    }
+                    return checkTaskLeaderPermission(taskId, userId);
 
                 case USER_ADD:
                 case USER_UPDATE_ADMIN:
@@ -371,7 +383,7 @@ public class PermissionAspect {
      * 验证是否是任务负责人（普通成员）
      */
     private boolean checkTaskLeaderPermission(Integer taskId, Integer userId) {
-        return tasksMapper.getTaskById(taskId).getAssigneeId().equals(userId);
+        return tasksMemberMapper.getTaskMember(taskId, userId).getTaskRole().equals("ASSIGNEE");
     }
 
     /**

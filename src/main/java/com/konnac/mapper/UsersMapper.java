@@ -40,7 +40,7 @@ public interface UsersMapper {
     /**
      *  分页条件查询
      */
-    List<User> list(Integer id, String username, String realName, User.UserRole role, LocalDate begin, LocalDate end);
+    List<User> list(Integer id, String username, String realName, User.UserRole role, List<User.UserRole> excludeRoles, LocalDate begin, LocalDate end);
 
     /**
      * 检查用户名是否存在
@@ -53,4 +53,10 @@ public interface UsersMapper {
      */
     @Select("SELECT COUNT(1) FROM users")
     long countUsers();
+
+    /**
+     * 验证旧密码是否正确
+     */
+    @Select("SELECT COUNT(1) FROM users WHERE id = #{id} AND password = #{oldPassword}")
+    boolean verifyOldPassword(@Param("id") Integer id, @Param("oldPassword") String oldPassword);
 }

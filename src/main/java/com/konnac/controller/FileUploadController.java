@@ -3,6 +3,8 @@ package com.konnac.controller;
 import com.konnac.pojo.Result;
 import com.konnac.utils.AliyunOSSUtil;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,8 @@ import java.util.Map;
 @RequestMapping("/upload")
 public class FileUploadController {
 
+    private static final Logger log = LoggerFactory.getLogger(FileUploadController.class);
+
     @Autowired
     private AliyunOSSUtil aliyunOSSUtil;
 
@@ -31,23 +35,34 @@ public class FileUploadController {
     @PostMapping
     public Result uploadFile(@RequestParam("file") MultipartFile file) {
         try {
+            log.info("开始上传文件: {}", file.getOriginalFilename());
+            log.info("文件大小: {} bytes", file.getSize());
+            log.info("文件类型: {}", file.getContentType());
+            
             if (file.isEmpty()) {
+                log.warn("上传的文件为空");
                 return Result.error("文件不能为空");
             }
 
             String originalFilename = file.getOriginalFilename();
             if (originalFilename == null || !originalFilename.contains(".")) {
+                log.warn("文件名格式不正确: {}", originalFilename);
                 return Result.error("文件名格式不正确");
             }
 
             String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
             List<String> allowedTypeList = Arrays.asList(allowedTypes.split(","));
 
+            log.info("文件扩展名: {}", extension);
+            log.info("允许的文件类型: {}", allowedTypes);
+
             if (!allowedTypeList.contains(extension)) {
+                log.warn("不支持的文件类型: {}", extension);
                 return Result.error("不支持的文件类型: " + extension);
             }
 
             String fileUrl = aliyunOSSUtil.uploadFile(file);
+            log.info("文件上传成功，URL: {}", fileUrl);
 
             Map<String, Object> data = new HashMap<>();
             data.put("url", fileUrl);
@@ -56,6 +71,10 @@ public class FileUploadController {
 
             return Result.success("文件上传成功", data);
         } catch (IOException e) {
+            log.error("文件上传失败", e);
+            return Result.error("文件上传失败: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("文件上传发生异常", e);
             return Result.error("文件上传失败: " + e.getMessage());
         }
     }

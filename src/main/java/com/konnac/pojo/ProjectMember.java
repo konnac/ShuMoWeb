@@ -22,7 +22,6 @@ public class ProjectMember {
     private String joinByName; // 添加人姓名
     private MemberStatus status; // 状态
     private User.UserRole userRole; // 系统角色
-//    private TaskStats taskStats; // 任务统计
     private String department; // 部门
     private String phone; // 电话
     private Integer taskCompletionRate; // 任务完成率

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Transactional(rollbackFor = Exception.class, timeout = 15)
 @Service
@@ -85,9 +86,10 @@ public class UsersServiceImpl implements UsersService {
                          String username,
                          String realName,
                          User.UserRole role,
+                         List<User.UserRole> excludeRoles,
                          LocalDate begin,
                          LocalDate end) throws BusinessException {
-        PageInfo<User> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> UsersMapper.list(id, username, realName, role, begin, end));
+        PageInfo<User> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> UsersMapper.list(id, username, realName, role, excludeRoles, begin, end));
         return new PageBean(pageBean.getTotal(), pageBean.getList());
     }
 
@@ -105,6 +107,22 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public long countUsers() {
         return UsersMapper.countUsers();
+    }
+
+    /**
+     * 修改密码
+     */
+    @Override
+    public void changePassword(Integer id, String oldPassword, String newPassword) {
+        boolean isValid = UsersMapper.verifyOldPassword(id, oldPassword);
+        if (!isValid) {
+            throw new RuntimeException("原密码错误");
+        }
+        User user = new User();
+        user.setId(id);
+        user.setPassword(newPassword);
+        user.setUpdateTime(LocalDateTime.now());
+        UsersMapper.updateUser(user);
     }
 
 

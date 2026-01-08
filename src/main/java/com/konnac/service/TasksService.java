@@ -29,7 +29,8 @@ public interface TasksService {
                   Task.TaskStatus status,
                   @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate begin,
                   @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end,
-                  Integer currentUserId);
+                  Integer currentUserId,
+                  Boolean isAdmin);
 
     /**
      * 统计任务总数
@@ -52,6 +53,16 @@ public interface TasksService {
     UserOverview.TaskStatusStats getUserTaskStats(Integer userId);
 
     /**
+     * 获取项目经理负责项目下的任务总数
+     */
+    long getManagerTaskCount(Integer userId);
+
+    /**
+     * 获取项目经理负责项目下的任务状态统计
+     */
+    UserOverview.TaskStatusStats getManagerTaskStats(Integer userId);
+
+    /**
      * 分页查询指定用户的任务
      */
     PageBean pageMyTasks(Integer page,
@@ -64,5 +75,6 @@ public interface TasksService {
                          @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate begin,
                          @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end,
                          Integer currentUserId,
-                         String userRole);
+                         String userRole,
+                         Boolean isAdmin);
 }

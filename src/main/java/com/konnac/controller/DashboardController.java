@@ -3,6 +3,7 @@ package com.konnac.controller;
 import com.konnac.context.UserContext;
 import com.konnac.pojo.AdminOverview;
 import com.konnac.pojo.Result;
+import com.konnac.pojo.User;
 import com.konnac.pojo.UserOverview;
 import com.konnac.service.ProjectsService;
 import com.konnac.service.TasksService;
@@ -46,11 +47,19 @@ public class DashboardController {
             return Result.error("用户未登录");
         }
         
+        User.UserRole userRole = UserContext.getCurrentUser().getRole();
+        
         UserOverview userOverview = new UserOverview();
         userOverview.setTotalProjects(projectsService.getUserProjectCount(userId));
-        userOverview.setTotalTasks(tasksService.getUserTaskCount(userId));
         userOverview.setActiveProjects(projectsService.getUserActiveProjectCount(userId));
-        userOverview.setTaskStats(tasksService.getUserTaskStats(userId));
+        
+        if (userRole == User.UserRole.PROJECT_MANAGER) {
+            userOverview.setTotalTasks(tasksService.getManagerTaskCount(userId));
+            userOverview.setTaskStats(tasksService.getManagerTaskStats(userId));
+        } else {
+            userOverview.setTotalTasks(tasksService.getUserTaskCount(userId));
+            userOverview.setTaskStats(tasksService.getUserTaskStats(userId));
+        }
         
         return Result.success(userOverview);
     }

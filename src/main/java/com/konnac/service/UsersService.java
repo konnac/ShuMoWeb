@@ -5,6 +5,7 @@ import com.konnac.pojo.User;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface UsersService {
 
@@ -36,7 +37,7 @@ public interface UsersService {
     /**
      * 分页查询
      */
-    PageBean page(Integer page, Integer pageSize, Integer id, String username, String realName, User.UserRole role,
+    PageBean page(Integer page, Integer pageSize, Integer id, String username, String realName, User.UserRole role, List<User.UserRole> excludeRoles,
                   @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate begin,
                   @DateTimeFormat(pattern="yyyy-MM-dd") LocalDate end);
 
@@ -49,4 +50,9 @@ public interface UsersService {
      * 统计用户数量
      */
     long countUsers();
+
+    /**
+     * 修改密码
+     */
+    void changePassword(Integer id, String oldPassword, String newPassword);
 }

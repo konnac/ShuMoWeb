@@ -13,8 +13,8 @@
     </select>
     <!--新增项目成员-->
     <insert id="addTaskMember">
-        insert into task_members (task_id, user_id, task_role, join_by, status)
-        values (#{taskId}, #{userId}, #{taskRole}, #{joinBy}, #{status})
+        insert into task_members (task_id, user_id, task_role, join_by, status, join_date)
+        values (#{taskId}, #{userId}, #{taskRole}, #{joinBy}, #{status}, #{joinDate})
     </insert>
     <!--根据项目id和用户id获取项目内成员-->
     <select id="getMemberByTaskIdAndUserId" resultType="com.konnac.pojo.TaskMember">
@@ -70,7 +70,9 @@
             <if test="taskId != null">
                 and tm.task_id = #{taskId}
             </if>
-            and tm.status = 'ACTIVE'
+            <if test="isAdmin == null or isAdmin == false">
+                and tm.status = 'ACTIVE'
+            </if>
             <if test="name != null and name != ''">
                 and u.username like concat('%', #{name}, '%')
             </if>
@@ -99,4 +101,22 @@
         where task_id = #{taskId}
           and status = 'ACTIVE'
     </select>
+    <select id="getTaskMember" resultType="com.konnac.pojo.TaskMember">
+        select *
+        from task_members
+        where task_id = #{taskId}
+          and user_id = #{userId}
+          and status = 'ACTIVE'
+    </select>
+
+    <!--批量禁用项目下所有任务的成员-->
+    <update id="disableTaskMembersByProjectId">
+        UPDATE task_members
+        SET status = 'INACTIVE',
+            updated_time = NOW()
+        WHERE task_id IN (
+            SELECT id FROM tasks WHERE project_id = #{projectId}
+        )
+          AND status = 'ACTIVE'
+    </update>
 </mapper>

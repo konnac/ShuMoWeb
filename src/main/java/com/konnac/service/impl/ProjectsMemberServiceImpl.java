@@ -73,9 +73,27 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
             throw new BusinessException("无效的项目角色");
         }
 
-        //4.验证用户是否已经加入项目
-        if (projectsMemberMapper.isMemberExist(projectId, userId)) {
-            throw new BusinessException("用户已是项目成员");
+        //4.禁止通过添加成员的方式设置项目经理角色
+        if ("PROJECT_MANAGER".equals(projectRole)) {
+            throw new BusinessException("项目经理角色只能在项目编辑时设置，不能通过添加成员方式设置");
+        }
+
+        //4.检查用户是否已经是项目成员
+        ProjectMember existingMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, userId);
+        if (existingMember != null) {
+            if (existingMember.getStatus() == ProjectMember.MemberStatus.ACTIVE) {
+                throw new BusinessException("用户已是项目成员");
+            } else {
+                // 成员是 INACTIVE 状态，重新激活
+                existingMember.setStatus(ProjectMember.MemberStatus.ACTIVE);
+                existingMember.setProjectRole(projectRole);
+                existingMember.setJoinBy(operatorId);
+                existingMember.setJoinDate(LocalDateTime.now());
+                existingMember.setUpdateTime(LocalDateTime.now());
+                projectsMemberMapper.updateProjectMember(existingMember);
+                log.info("重新激活项目成员: projectId={}, userId={}, projectRole={}, operatorId={}", projectId, userId, projectRole, operatorId);
+                return;
+            }
         }
 
         //6.创建项目成员记录
@@ -193,7 +211,12 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
             throw new BusinessException("未找到改项目成员"); //后续改为自定义错误
         }
 
-        //3.重复角色抛出异常
+        //3.禁止将普通成员改为项目经理
+        if ("PROJECT_MANAGER".equals(newProjectRole) && !"PROJECT_MANAGER".equals(projectMember.getProjectRole())) {
+            throw new BusinessException("项目经理角色只能在项目编辑时设置，不能通过修改成员角色方式设置");
+        }
+
+        //4.重复角色抛出异常
         String oldProjectRole = projectMember.getProjectRole();
         projectMember.setProjectRole(newProjectRole);
         if (oldProjectRole.equals(newProjectRole)) {
@@ -203,7 +226,7 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         projectMember.setUpdateTime(LocalDateTime.now());
         projectsMemberMapper.updateProjectMember(projectMember);
 
-        //3.发送通知给被修改的成员
+        //5.发送通知给被修改的成员
         notificationService.sendUpdateMemberRoleNotification(projectId, userId, operatorId, ProjectRole.valueOf(newProjectRole));
 
     }
@@ -230,8 +253,9 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
                          String name,
                          String realName,
                          String userRole,
-                         String department) throws BusinessException {
-        PageInfo<ProjectMember> pageInfo = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMemberMapper.list(projectId, name, realName, userRole, department));
+                         String department,
+                         Boolean isAdmin) throws BusinessException {
+        PageInfo<ProjectMember> pageInfo = PageHelperUtils.safePageQuery(page, pageSize, () -> projectsMemberMapper.list(projectId, name, realName, userRole, department, isAdmin));
         return new PageBean(pageInfo.getTotal(), pageInfo.getList());
     }
 
@@ -284,6 +308,43 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         stats.putAll(roleStats);
         log.info("获取项目成员统计成功");
         return stats;
+    }
+
+    /**
+     * 激活项目成员
+     */
+    @RequirePermission(value = PermissionType.MEMBER_UPDATE)
+    @Override
+    public void activateMember(Integer projectId, Integer userId, Integer operatorId) {
+        log.debug("激活项目成员: projectId={}, userId={}, operatorId={}", projectId, userId, operatorId);
+
+        Project project = projectsMapper.getProjectById(projectId);
+        if (project == null) {
+            log.warn("项目不存在: projectId={}", projectId);
+            throw new BusinessException("项目不存在");
+        }
+
+        if (project.getStatus() == Project.ProjectStatus.TERMINATED) {
+            log.warn("项目已取消，不能激活成员: projectId={}", projectId);
+            throw new BusinessException("项目已取消，不能激活成员");
+        }
+
+        ProjectMember projectMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, userId);
+        if (projectMember == null) {
+            log.warn("项目成员不存在: projectId={}, userId={}", projectId, userId);
+            throw new BusinessException("项目成员不存在");
+        }
+
+        if (projectMember.getStatus() == ProjectMember.MemberStatus.ACTIVE) {
+            log.warn("项目成员已经是激活状态: projectId={}, userId={}", projectId, userId);
+            throw new BusinessException("项目成员已经是激活状态");
+        }
+
+        projectMember.setStatus(ProjectMember.MemberStatus.ACTIVE);
+        projectMember.setUpdateTime(LocalDateTime.now());
+        projectsMemberMapper.updateProjectMember(projectMember);
+
+        log.info("激活项目成员成功: projectId={}, userId={}, operatorId={}", projectId, userId, operatorId);
     }
 
 

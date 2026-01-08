@@ -24,8 +24,8 @@ document:
 aliyun:
   oss:
     endpoint: oss-cn-hangzhou.aliyuncs.com
-    access-key-id:
-    access-key-secret:
+    access-key-id: LTAI5tDvBU7iKMX39NSStVP3
+    access-key-secret: Yewq5Gh0bRGMPPpXGxjtyMyAKisVlw
     bucket-name: web-konnac-management
     base-url: https://web-konnac-management.oss-cn-hangzhou.aliyuncs.com/
 

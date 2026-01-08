@@ -15,6 +15,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -63,10 +64,11 @@ public class UsersController {
                        String username,
                        String realName,
                        User.UserRole role,
+                       @RequestParam(required = false) List<User.UserRole> excludeRoles,
                        @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate begin,
                        @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end) {
-        log.info("分页查询，参数：page={},pageSize={},id={},username={},realName={},role={},begin={},end={}", page, pageSize, id, username, realName, role, begin, end);
-        PageBean pageBean = usersService.page(page, pageSize, id, username, realName, role, begin, end);
+        log.info("分页查询，参数：page={},pageSize={},id={},username={},realName={},role={},excludeRoles={},begin={},end={}", page, pageSize, id, username, realName, role, excludeRoles, begin, end);
+        PageBean pageBean = usersService.page(page, pageSize, id, username, realName, role, excludeRoles, begin, end);
 
         return Result.success(pageBean);
     }
@@ -79,4 +81,11 @@ public class UsersController {
         return Result.success(!exists);
     }
 
+    //修改密码
+    @PutMapping("/change-password")
+    public Result changePassword(@RequestBody User user) {
+        log.info("修改密码，用户id：{}", user.getId());
+        usersService.changePassword(user.getId(), user.getOldPassword(), user.getPassword());
+        return Result.success();
+    }
 }

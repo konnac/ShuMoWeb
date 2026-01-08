@@ -95,7 +95,8 @@ public class ProjectsMemberController {
                        ){
 
         log.info("获取项目成员列表，项目id：{}", projectId);
-        PageBean pageBean = projectsMemberService.page(page, pageSize, projectId, name, realName, userRole, department);
+        Boolean isAdmin = AuthUtils.getCurrentUser().getRole() == com.konnac.pojo.User.UserRole.ADMIN;
+        PageBean pageBean = projectsMemberService.page(page, pageSize, projectId, name, realName, userRole, department, isAdmin);
 
         return Result.success(pageBean);
     }
@@ -116,6 +117,17 @@ public class ProjectsMemberController {
     public Result getProjectMembersByRole(@PathVariable Integer projectId, String projectRole) {
         log.info("获取项目中的特定角色成员，项目id：{}，角色：{}", projectId, projectRole);
         return Result.success(projectsMemberService.getProjectMembersByRole(projectId, projectRole));
+    }
+
+    /**
+     * 激活项目成员
+     */
+    @PutMapping("/{userId}/activate")
+    public Result activateMember(@PathVariable Integer projectId, @PathVariable Integer userId) {
+        Integer operatorId = UserContext.getCurrentUserId();
+        log.info("激活项目成员，项目id：{}，用户id：{}，操作人id：{}", projectId, userId, operatorId);
+        projectsMemberService.activateMember(projectId, userId, operatorId);
+        return Result.success();
     }
 
 }

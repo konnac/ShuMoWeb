@@ -28,6 +28,11 @@ public interface TaskMemberService {
      */
     void updateMemberRole(Integer taskId, Integer userId, String newTaskRole, Integer operatorId);
 
+    /**
+     * 激活任务成员
+     */
+    void activateMember(Integer taskId, Integer userId, Integer operatorId);
+
     //  ======================查询功能======================
     /**
      * 分页查询任务成员
@@ -38,7 +43,8 @@ public interface TaskMemberService {
                   String name,
                   String realName,
                   String taskRole,
-                  String department);
+                  String department,
+                  Boolean isAdmin);
 
     //  ======================其他功能======================
 
