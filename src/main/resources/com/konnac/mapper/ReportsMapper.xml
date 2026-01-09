@@ -86,7 +86,7 @@
         </where>
         ORDER BY r.submit_time DESC
     </select>
-
+<!--根据时间段获取用户完成的任务列表-->
     <select id="getCompletedTasksByPeriod" resultType="com.konnac.pojo.Task">
         SELECT t.id, t.title, t.description, t.status,
                t.assignee_id as assigneeId, t.project_id as projectId, t.created_time as createdTime, t.update_time as updateTime,

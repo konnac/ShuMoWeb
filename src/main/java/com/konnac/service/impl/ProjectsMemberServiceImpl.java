@@ -15,15 +15,9 @@ import com.konnac.utils.PageHelperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
 
 @Slf4j
 @Transactional(rollbackFor = Exception.class, timeout = 15)
@@ -116,46 +110,6 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
     }
 
     /**
-     * 批量添加项目成员(允许部分失败)
-     */
-    @Transactional(
-            propagation = Propagation.REQUIRES_NEW,
-            rollbackFor = Exception.class,
-            timeout = 30)
-    @RequirePermission(value = PermissionType.MEMBER_ADD)
-    @Override
-    public BatchResult addProjectMembers(Integer projectId, List<Integer> userIds, Integer operatorId) {
-        if (userIds == null || userIds.isEmpty()) {
-            log.warn("成员列表不能为空");
-            throw new BusinessException("成员列表不能为空");
-        }
-
-        //  1.包装批量结果
-        BatchResult batchResult = new BatchResult();
-        batchResult.setTotal(userIds.size());
-
-        // 2.批量添加项目成员,失败跳过且添加失败的成员记录
-        for (Integer userId : userIds) {
-            try {
-                addProjectMember(projectId, userId, "  ", operatorId);
-                batchResult.addSuccess(userId);
-            } catch (BusinessException e) {
-                batchResult.addFailure(userId, e.getMessage());
-                log.warn("成员添加失败跳过: userId={}, error={}", userId, e.getMessage());
-            }
-        }
-
-        // 如果全部失败，抛出异常
-        if (batchResult.isAllFailure()) {
-            throw new BusinessException("所有成员添加失败: " + batchResult.getFailureDetails());
-        }
-
-        log.info("批量添加项目成员结果: total={}, successCount={}, failureCount={}", batchResult.getTotal(), batchResult.getSuccessCount(), batchResult.getFailureCount());
-
-        return batchResult;
-    }
-
-    /**
      * 删除项目成员
      */
     @RequirePermission(value = PermissionType.MEMBER_REMOVE)
@@ -234,16 +188,6 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
     //  ======================查询功能======================
 
     /**
-     * 获取项目成员列表
-     */
-    @RequirePermission(value = PermissionType.MEMBER_VIEW)
-    public List<ProjectMember> getProjectMembers(Integer projectId) {
-        log.debug("获取项目成员列表: projectId={}", projectId);
-        log.info("获取项目成员列表成功");
-        return projectsMemberMapper.findActiveByProjectId(projectId);
-    }
-
-    /**
      * 分页查询
      */
     @RequirePermission(value = PermissionType.MEMBER_VIEW)
@@ -259,56 +203,8 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
         return new PageBean(pageInfo.getTotal(), pageInfo.getList());
     }
 
-    /**
-     * 获取项目中的特定角色成员
-     */
-    public List<Integer> getProjectMembersByRole(Integer projectId, String projectRole) {
-        log.debug("获取项目成员角色: projectId={}, projectRole={}", projectId, projectRole);
-        List<ProjectMember> projectMembers = projectsMemberMapper.findActiveByProjectId(projectId);
-        List<Integer> userIds = new ArrayList<>();
-        //筛选特定角色的成员
-        for (ProjectMember projectMember : projectMembers) {
-            if (projectMember.getProjectRole().equals(projectRole)) {
-                userIds.add(projectMember.getUserId());
-            }
-        }
-        log.info("获取项目成员角色成功");
-        return userIds;
-    }
-
-    /**
-     * 获取项目成员角色id
-     */
-    public List<Integer> getProjectMembersIds(Integer projectId) {
-        log.debug("获取项目成员角色id: projectId={}", projectId);
-        log.info("获取项目成员角色id成功");
-        return projectsMemberMapper.getProjectMembersIds(projectId);
-    }
-
     // ======================统计功能======================
 
-    /**
-     * 获取项目成员统计
-     */
-    public Map<String, Integer> getProjectMemberStats(Integer projectId) {
-        log.debug("获取项目成员统计:projectId={}", projectId);
-        List<ProjectMember> members = projectsMemberMapper.findActiveByProjectId(projectId);
-
-        Map<String, Integer> stats = new HashMap<>();
-        stats.put("total", members.size());
-
-        //按角色统计
-        Map<String, Integer> roleStats = members.stream().collect(Collectors.groupingBy(ProjectMember::getProjectRole,
-                Collectors.collectingAndThen(
-                        Collectors.counting(),
-                        Long::intValue
-                )
-        ));
-
-        stats.putAll(roleStats);
-        log.info("获取项目成员统计成功");
-        return stats;
-    }
 
     /**
      * 激活项目成员

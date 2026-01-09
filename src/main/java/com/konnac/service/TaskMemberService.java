@@ -14,11 +14,6 @@ public interface TaskMemberService {
     void addTaskMember(Integer taskId, Integer userId, String taskRole, Integer operatorId);
 
     /**
-     * 批量添加任务成员
-     */
-    BatchResult addTaskMembers(Integer taskId, List<Integer> userIds, Integer operatorId);
-
-    /**
      * 删除任务成员
      */
     void deleteTaskMembers(Integer taskId, List<Integer> userIds, Integer operatorId);

@@ -62,11 +62,6 @@ public interface ProjectsMapper {
             @Param("end") LocalDate end       // 项目结束时间
     );
 
-    /**
-     *  查询我负责的项目
-     */
-    @Select("SELECT * FROM projects WHERE manager_id = #{userId} ORDER BY id DESC")
-    List<Project> listMyProjects(@Param("currentUserId") Integer currentUserId);
 
     /**
      * 统计项目总数
@@ -82,7 +77,7 @@ public interface ProjectsMapper {
     long getUserProjectCount(Integer userId);
 
     /**
-     * 获取指定用户参与的活跃项目数
+     * 获取指定用户参与的活跃项目数 子查询返回任何行 EXISTS返回 true 否则返回 false
      */
     @Select("SELECT COUNT(DISTINCT p.id) FROM projects p " +
             "WHERE (p.manager_id = #{userId} " +

@@ -4,6 +4,11 @@ import com.konnac.exception.BusinessException;
 import com.konnac.pojo.User;
 import com.konnac.context.UserContext;
 
+/**
+ * 权限工具类
+ * 获取和验证当前登录用户的信息,写着有时忘了就直接就去UserContext拿了其实..
+ */
+
 public class AuthUtils {
 
     /**

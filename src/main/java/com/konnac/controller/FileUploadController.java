@@ -29,7 +29,7 @@ public class FileUploadController {
     @Autowired
     private AliyunOSSUtil aliyunOSSUtil;
 
-    @Value("${document.allowed-types}")
+    @Value("${avatar.allowed-types}")
     private String allowedTypes;
 
     @PostMapping
@@ -38,32 +38,39 @@ public class FileUploadController {
             log.info("开始上传文件: {}", file.getOriginalFilename());
             log.info("文件大小: {} bytes", file.getSize());
             log.info("文件类型: {}", file.getContentType());
-            
+
+            // 验证文件是否为空
             if (file.isEmpty()) {
                 log.warn("上传的文件为空");
                 return Result.error("文件不能为空");
             }
 
+            // 验证文件名格式是否正确
             String originalFilename = file.getOriginalFilename();
             if (originalFilename == null || !originalFilename.contains(".")) {
                 log.warn("文件名格式不正确: {}", originalFilename);
                 return Result.error("文件名格式不正确");
             }
 
+            // 提取文件扩展名并转换为小写
             String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+            // 将配置的允许类型字符串转换为列表
             List<String> allowedTypeList = Arrays.asList(allowedTypes.split(","));
 
             log.info("文件扩展名: {}", extension);
             log.info("允许的文件类型: {}", allowedTypes);
 
+            // 检查文件扩展名是否在允许的类型列表中
             if (!allowedTypeList.contains(extension)) {
                 log.warn("不支持的文件类型: {}", extension);
                 return Result.error("不支持的文件类型: " + extension);
             }
 
+            // 上传文件
             String fileUrl = aliyunOSSUtil.uploadFile(file);
             log.info("文件上传成功，URL: {}", fileUrl);
 
+            // 返回结果
             Map<String, Object> data = new HashMap<>();
             data.put("url", fileUrl);
             data.put("filename", originalFilename);
@@ -79,56 +86,4 @@ public class FileUploadController {
         }
     }
 
-    @DeleteMapping
-    public Result deleteFile(@RequestParam("url") String fileUrl) {
-        try {
-            aliyunOSSUtil.deleteFile(fileUrl);
-            return Result.success("文件删除成功");
-        } catch (Exception e) {
-            return Result.error("文件删除失败: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/download")
-    public void downloadFile(@RequestParam("url") String fileUrl,
-                            @RequestParam(value = "filename", required = false) String filename,
-                            HttpServletResponse response) {
-        try {
-            InputStream inputStream = aliyunOSSUtil.downloadFile(fileUrl);
-
-            String downloadFilename = filename;
-            if (downloadFilename == null || downloadFilename.isEmpty()) {
-                downloadFilename = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-            }
-
-            response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment; filename=" + 
-                    URLEncoder.encode(downloadFilename, StandardCharsets.UTF_8));
-
-            OutputStream outputStream = response.getOutputStream();
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-            outputStream.flush();
-            inputStream.close();
-        } catch (IOException e) {
-            throw new RuntimeException("文件下载失败: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/download-url")
-    public Result getDownloadUrl(@RequestParam("url") String fileUrl,
-                                  @RequestParam(value = "expiration", defaultValue = "3600000") Long expiration) {
-        try {
-            String downloadUrl = aliyunOSSUtil.getPresignedUrl(fileUrl, expiration);
-            Map<String, Object> data = new HashMap<>();
-            data.put("url", downloadUrl);
-            data.put("expiration", expiration);
-            return Result.success("获取下载链接成功", data);
-        } catch (Exception e) {
-            return Result.error("获取下载链接失败: " + e.getMessage());
-        }
-    }
 }

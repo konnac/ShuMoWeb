@@ -119,23 +119,4 @@
         <!-- 添加排序，提高查询可预测性 -->
         ORDER BY id
     </select>
-
-    <!-- 新增：根据用户名查询用户（用于登录校验等场景） -->
-    <select id="selectByUsername" resultType="com.konnac.pojo.User">
-        <include refid="commonSelect"/>
-        WHERE username = #{username}
-        LIMIT 1
-    </select>
-
-    <!-- 新增：批量更新员工状态（示例） -->
-    <update id="batchUpdateRole">
-        UPDATE users
-        SET role = #{role},
-        update_time = #{updateTime}
-        WHERE id IN
-        <foreach collection="ids" item="id" separator="," open="(" close=")">
-            #{id}
-        </foreach>
-    </update>
-
 </mapper>

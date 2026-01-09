@@ -44,19 +44,18 @@ public class DocumentsServiceImpl implements DocumentsService {
      */
     @Override
     public String uploadDocument(Integer projectId, MultipartFile file, String category, String description, Integer uploaderId) throws Exception {
+        // 检查项目是否存在
         Project project = projectsMapper.getProjectById(projectId);
         if (project == null) {
             throw new BusinessException("项目不存在");
         }
 
-//        ProjectMember member = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, uploaderId);
-//        if (member == null && !project.getManagerId().equals(uploaderId)) {
-//            throw new BusinessException("您不是该项目的成员，无法上传文档");
-//        }
-
+        // 如果去除空格后不为空就转成枚举 空则默认OTHER
         Document.DocumentCategory docCategory = category != null && !category.trim().isEmpty() ? Document.DocumentCategory.valueOf(category) : Document.DocumentCategory.OTHER;
+        // 获取上传文件的url
         String fileUrl = aliyunOSSUtil.uploadFileToProject(file, projectId, docCategory.toString());
 
+        // 创建文档对象
         Document document = new Document();
         document.setProjectId(projectId);
         document.setFileName(file.getOriginalFilename());
@@ -69,27 +68,31 @@ public class DocumentsServiceImpl implements DocumentsService {
         document.setUploadTime(LocalDateTime.now());
         document.setUpdateTime(LocalDateTime.now());
 
+        // 添加文档
         documentsMapper.addDocument(document);
 
         log.info("用户{}上传文档到项目{}: {}", uploaderId, projectId, file.getOriginalFilename());
 
+        // 返回文件url
         return fileUrl;
     }
     /**
      * 修改文档
      */
     @Override
-    public void updateDocument(Integer documentId, String fileName, String category, String description, Integer uploaderId) {
+    public void updateDocument(Integer documentId, Integer projectId, String fileName, String category, String description, Integer uploaderId) {
+        // 检查文档是否存在
         Document document = documentsMapper.getDocumentById(documentId);
         if (document == null) {
             throw new BusinessException("文档不存在");
         }
 
-//        Project project = projectsMapper.getProjectById(document.getProjectId());
-//        if (!project.getManagerId().equals(uploaderId) && !document.getUploaderId().equals(uploaderId)) {
-//            throw new BusinessException("您没有权限修改该文档");
-//        }
+        // 验证文档所属项目是否匹配
+        if (!document.getProjectId().equals(projectId)) {
+            throw new BusinessException("文档不属于该项目");
+        }
 
+        // 修改文档
         document.setFileName(fileName);
         document.setCategory(category != null && !category.trim().isEmpty() ? Document.DocumentCategory.valueOf(category) : document.getCategory());
         document.setDescription(description);
@@ -110,12 +113,8 @@ public class DocumentsServiceImpl implements DocumentsService {
             throw new BusinessException("文档不存在");
         }
 
-        Project project = projectsMapper.getProjectById(document.getProjectId());
-        if (!project.getManagerId().equals(uploaderId) && !document.getUploaderId().equals(uploaderId)) {
-            throw new BusinessException("您没有权限删除该文档");
-        }
-
         try {
+            // 删除OSS中的文件
             aliyunOSSUtil.deleteFile(document.getFileUrl());
         } catch (Exception e) {
             log.warn("删除OSS文件失败: {}", document.getFileUrl(), e);
@@ -134,21 +133,6 @@ public class DocumentsServiceImpl implements DocumentsService {
         return documentsMapper.getDocumentById(documentId);
     }
 
-    /**
-     * 列出项目下的文档(已被分页查询替代)
-     */
-    @Override
-    public List<Document> listByProjectId(Integer projectId, String category, String fileName) {
-        return documentsMapper.listByProjectId(projectId, category, fileName);
-    }
-
-    /**
-     * 列出项目下的所有文档
-     */
-    @Override
-    public List<Document> listAllByProjectId(Integer projectId) {
-        return documentsMapper.listAllByProjectId(projectId);
-    }
 
     /**
      * 统计项目下的文档数量
@@ -158,21 +142,6 @@ public class DocumentsServiceImpl implements DocumentsService {
         return documentsMapper.countByProjectId(projectId);
     }
 
-    /**
-     * 删除项目下的所有文档
-     */
-    @Override
-    public void deleteByProjectId(Integer projectId) {
-        List<Document> documents = documentsMapper.listAllByProjectId(projectId);
-        for (Document document : documents) {
-            try {
-                aliyunOSSUtil.deleteFile(document.getFileUrl());
-            } catch (Exception e) {
-                log.warn("删除OSS文件失败: {}", document.getFileUrl(), e);
-            }
-        }
-        documentsMapper.deleteByProjectId(projectId);
-    }
 
     /**
      * 分页列出项目下的文档

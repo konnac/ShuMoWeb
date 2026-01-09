@@ -25,10 +25,7 @@ public interface ProjectsService {
     void updateProject(Project project, Integer operatorId);
 
 //=============查询项目================
-//    /**
-//     *  根据id查询项目
-//     */
-//    Project getProjectById(Integer id);
+
 
     /**
      *  分页查询项目

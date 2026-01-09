@@ -96,10 +96,6 @@ public interface NotificationService {
      */
     void deleteAllReadNotifications(Integer userId);
 
-    /**
-     * 删除用户某个时间前的通知
-     */
-    void deleteNotificationsBeforeDate(Integer userId, LocalDateTime beforeDate);
 
 //============构建通知=============
     /**

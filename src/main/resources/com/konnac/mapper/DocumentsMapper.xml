@@ -3,7 +3,10 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.konnac.mapper.DocumentsMapper">
-
+    <!--
+        通用查询字段SQL片段
+        包含文档基本信息以及关联的项目名称和上传者姓名
+        -->
     <sql id="commonSelect">
         select d.id, d.project_id, d.file_name, d.file_url, d.file_size, d.file_type,
                d.category, d.description, d.uploader_id, d.upload_time, d.update_time,
@@ -12,21 +15,42 @@
         left join projects p on d.project_id = p.id
         left join users u on d.uploader_id = u.id
     </sql>
-
+    <!--
+   添加文档记录
+   @param projectId 项目ID
+   @param fileName 文件名称
+   @param fileUrl 文件URL
+   @param fileSize 文件大小
+   @param fileType 文件类型
+   @param category 分类
+   @param description 描述
+   @param uploaderId 上传者ID
+   @param uploadTime 上传时间
+   @param updateTime 更新时间
+   @return 插入记录的主键ID
+   -->
     <insert id="addDocument" useGeneratedKeys="true" keyProperty="id">
         insert into documents(project_id, file_name, file_url, file_size, file_type,
                               category, description, uploader_id, upload_time, update_time)
         values (#{projectId}, #{fileName}, #{fileUrl}, #{fileSize}, #{fileType},
                 #{category}, #{description}, #{uploaderId}, #{uploadTime}, #{updateTime})
     </insert>
-
+    <!--
+   更新文档信息
+   @param id 文档ID
+   @param fileName 文件名称
+   @param category 分类
+   @param description 描述
+   @param updateTime 更新时间
+   @return 更新记录数
+   -->
     <update id="updateDocument">
         update documents
         <set>
             <if test="fileName != null and fileName.trim() != ''">
                 file_name = #{fileName},
             </if>
-            <if test="category != null and category.trim() != ''">
+            <if test="category != null">
                 category = #{category},
             </if>
             <if test="description != null">
@@ -36,38 +60,51 @@
         </set>
         where id = #{id}
     </update>
-
+    <!--
+    根据ID删除文档
+    @param id 文档ID
+    @return 删除记录数
+    -->
     <delete id="deleteDocument">
         delete from documents where id = #{id}
     </delete>
-
+    <!--
+        根据项目ID删除文档
+        @param projectId 项目ID
+        @return 删除记录数
+        -->
     <delete id="deleteByProjectId">
         delete from documents where project_id = #{projectId}
     </delete>
-
+    <!--
+   根据ID获取文档详情
+   @param id 文档ID
+   @return Document文档对象
+   -->
     <select id="getDocumentById" resultType="com.konnac.pojo.Document">
         <include refid="commonSelect"/>
         where d.id = #{id}
     </select>
 
-    <select id="listByProjectId" resultType="com.konnac.pojo.Document">
-        <include refid="commonSelect"/>
-        <where>
-            d.project_id = #{projectId}
-            <if test="category != null and category.trim() != ''">
-                and d.category = #{category}
-            </if>
-            <if test="fileName != null and fileName.trim() != ''">
-                and d.file_name like concat('%', #{fileName}, '%')
-            </if>
-        </where>
-        order by d.upload_time desc
-    </select>
 
+    <!--
+   根据项目ID统计文档数量
+   @param projectId 项目ID
+   @return 文档总数
+   -->
     <select id="countByProjectId" resultType="long">
         select count(*) from documents where project_id = #{projectId}
     </select>
-
+    <!--
+    分页查询文档列表
+    @param projectId 项目ID
+    @param fileType 文件类型
+    @param category 分类
+    @param fileName 文件名称
+    @param begin 开始时间
+    @param end 结束时间
+    @return Document文档列表
+    -->
     <select id="list" resultType="com.konnac.pojo.Document">
         <include refid="commonSelect"/>
         <where>

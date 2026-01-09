@@ -41,24 +41,6 @@ public class ProjectsMemberController {
         return Result.success();
     }
 
-    /**
-     * 批量添加项目成员
-     */
-    @PostMapping("/batch")
-    public Result addProjectMembers(@PathVariable Integer projectId, @RequestBody List<Integer> projectMembers) {
-        // 调用Service，得到批量操作结果
-        BatchResult batchResult = projectsMemberService.addProjectMembers(projectId, projectMembers, UserContext.getCurrentUserId());
-
-        // 包装为统一的Result返回给前端
-        if (batchResult.isAllSuccess()) {
-            return Result.success("全部添加成功", batchResult);
-        } else if (batchResult.getFailureCount() > 0) {
-            // 部分成功，使用特定状态码
-            return Result.error(201, "部分添加成功", batchResult);
-        } else {
-            return Result.error("添加失败", batchResult);
-        }
-    }
 
     /**
      * 删除项目成员
@@ -99,24 +81,6 @@ public class ProjectsMemberController {
         PageBean pageBean = projectsMemberService.page(page, pageSize, projectId, name, realName, userRole, department, isAdmin);
 
         return Result.success(pageBean);
-    }
-
-    /**
-     * 获取项目成员统计
-     */
-    @GetMapping("/stats")
-    public Result getProjectMemberStats(@PathVariable Integer projectId) {
-        log.info("获取项目成员统计，项目id：{}", projectId);
-        return Result.success(projectsMemberService.getProjectMemberStats(projectId));
-    }
-
-    /**
-     * 获取项目中的特定角色成员
-     */
-    @GetMapping("/role/{projectRole}")
-    public Result getProjectMembersByRole(@PathVariable Integer projectId, String projectRole) {
-        log.info("获取项目中的特定角色成员，项目id：{}，角色：{}", projectId, projectRole);
-        return Result.success(projectsMemberService.getProjectMembersByRole(projectId, projectRole));
     }
 
     /**

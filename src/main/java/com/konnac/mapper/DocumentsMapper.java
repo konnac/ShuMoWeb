@@ -10,26 +10,20 @@ import java.util.List;
 
 @Mapper
 public interface DocumentsMapper {
-
+    //添加文档记录
     void addDocument(Document document);
-
+    //修改文档记录
     void updateDocument(Document document);
-
+    //删除文档记录
     void deleteDocument(Integer id);
-
+    //根据id查询文档记录
     Document getDocumentById(Integer id);
-
-    List<Document> listByProjectId(@Param("projectId") Integer projectId,
-                                    @Param("category") String category,
-                                    @Param("fileName") String fileName);
-
-    @Select("select * from documents where project_id = #{projectId}")
-    List<Document> listAllByProjectId(Integer projectId);
-
+    //根据项目id删除文档记录
     void deleteByProjectId(Integer projectId);
-
+    //统计指定项目下的文档数量
     long countByProjectId(Integer projectId);
 
+    //分页条件查询
     List<Document> list(@Param("projectId") Integer projectId,
                         @Param("fileType") String fileType,
                         @Param("category") Document.DocumentCategory category,

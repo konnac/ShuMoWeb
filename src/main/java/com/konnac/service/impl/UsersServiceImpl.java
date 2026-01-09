@@ -89,6 +89,7 @@ public class UsersServiceImpl implements UsersService {
                          List<User.UserRole> excludeRoles,
                          LocalDate begin,
                          LocalDate end) throws BusinessException {
+        //PageHelper提供的分页信息封装类
         PageInfo<User> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> UsersMapper.list(id, username, realName, role, excludeRoles, begin, end));
         return new PageBean(pageBean.getTotal(), pageBean.getList());
     }

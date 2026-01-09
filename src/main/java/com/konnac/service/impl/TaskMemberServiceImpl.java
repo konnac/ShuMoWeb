@@ -94,46 +94,6 @@ public class TaskMemberServiceImpl implements TaskMemberService {
     }
 
     /**
-     * 批量添加任务成员(允许部分失败)
-     */
-    @Transactional(
-            propagation = Propagation.REQUIRES_NEW,
-            rollbackFor = Exception.class,
-            timeout = 30)
-    @RequirePermission(value = PermissionType.TASK_ASSIGN)
-    @Override
-    public BatchResult addTaskMembers(Integer taskId, List<Integer> userIds, Integer operatorId) {
-        log.debug("批量添加任务成员: taskId={}, userIds={}", taskId, userIds);
-        if (userIds == null || userIds.isEmpty()) {
-            log.warn("用户列表不能为空");
-            throw new BusinessException("用户列表不能为空");
-        }
-
-        //1.包装批量结果
-        BatchResult batchResult = new BatchResult();
-        batchResult.setTotal(userIds.size());
-
-        //2.批量添加项目成员,失败跳过且添加失败的成员记录
-        for (Integer userId : userIds) {
-            try {
-                addTaskMember(taskId, userId, "COLLABORATOR", null);
-                notificationService.sendAddNotification(taskId, userId, operatorId);
-                batchResult.addSuccess(userId);
-            } catch (BusinessException e) {
-                batchResult.addFailure(userId, e.getMessage());
-                log.warn("成员添加失败跳过: userId={}, error={}", userId, e.getMessage());
-            }
-        }
-
-        if(batchResult.isAllFailure()){
-            throw new BusinessException("批量添加任务成员失败" + batchResult.getFailureDetails());
-        }
-
-        log.info("批量添加任务成员结果: total={}, successCount={}, failureCount={}", batchResult.getTotal(), batchResult.getSuccessCount(), batchResult.getFailureCount());
-        return batchResult;
-    }
-
-    /**
      * 批量删除任务成员
      */
     @RequirePermission(value = PermissionType.TASK_UPDATE, checkTask = true)

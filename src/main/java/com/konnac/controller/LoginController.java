@@ -18,7 +18,9 @@ import java.util.Map;
 public class LoginController {
     @Autowired
     private LoginService loginService;
-
+    /**
+     * 用户登录
+     */
     @PostMapping("/login")
     public Result login(@RequestBody User user){
         log.info("用户登录，用户名：{}", user.getUsername());

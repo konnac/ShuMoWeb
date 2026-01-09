@@ -322,16 +322,25 @@ public class ProjectsServiceImpl implements ProjectsService {
         return new PageBean(pageBean.getTotal(), pageBean.getList());
     }
 
+    /**
+     * 统计项目数量
+     */
     @Override
     public long countProjects() {
         return projectsMapper.count();
     }
 
+    /**
+     * 获取指定用户参与项目数量
+     */
     @Override
     public long getUserProjectCount(Integer userId) {
         return projectsMapper.getUserProjectCount(userId);
     }
 
+    /**
+     * 获取指定用户参与活跃项目数量
+     */
     @Override
     public long getUserActiveProjectCount(Integer userId) {
         return projectsMapper.getUserActiveProjectCount(userId);

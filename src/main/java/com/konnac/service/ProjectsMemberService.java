@@ -16,11 +16,6 @@ public interface ProjectsMemberService {
     void addProjectMember(Integer projectId, Integer userId, String projectRole, Integer operatorId);
 
     /**
-     * 批量添加项目成员
-     */
-    BatchResult addProjectMembers(Integer projectId, List<Integer> userIds, Integer operatorId);
-
-    /**
      * 删除项目成员
      */
     void deleteProjectMembers(Integer projectId, Integer[] userIds, Integer operatorId);
@@ -35,36 +30,6 @@ public interface ProjectsMemberService {
      * 分页查询项目成员
      */
     PageBean page(Integer page, Integer pageSize, Integer projectId, String name, String realName, String userRole, String department, Boolean isAdmin);
-
-    /**
-     * 获取项目成员列表
-     */
-    List<ProjectMember> getProjectMembers(Integer projectId);
-
-    /**
-     * 获取项目成员id
-     */
-    List<Integer> getProjectMembersIds(Integer projectId);
-
-//    /**
-//     * 获取项目成员角色详细 (待完成)
-//     */
-//    List<ProjectMember> getMembersDetails(Integer projectId);
-
-//    /**
-//     * 获取用户参与的所有项目
-//     */
-//    List<UserProject> getUserProjects(Integer userId);
-
-    /**
-     * 获取项目中的特定角色成员
-     */
-    List<Integer> getProjectMembersByRole(Integer projectId, String projectRole);
-
-    /**
-     * 获取项目成员统计
-     */
-    Map<String, Integer> getProjectMemberStats(Integer projectId);
 
     /**
      * 激活项目成员

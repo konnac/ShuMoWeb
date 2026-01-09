@@ -8,9 +8,11 @@ import com.konnac.pojo.Result;
 import com.konnac.service.DocumentsService;
 import com.konnac.utils.AliyunOSSUtil;
 import com.konnac.utils.AuthUtils;
+import com.konnac.utils.FileTypeValidator;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +38,9 @@ public class DocumentsController {
     @Autowired
     private AliyunOSSUtil aliyunOSSUtil;
 
+    @Autowired
+    private FileTypeValidator fileTypeValidator;
+
     /**
      * 上传文档
      */
@@ -45,10 +50,15 @@ public class DocumentsController {
                                   @RequestParam("file") MultipartFile file,
                                   @RequestParam(value = "category", required = false, defaultValue = "OTHER") String category,
                                   @RequestParam(value = "description", required = false) String description) {
+
+        if (!fileTypeValidator.validate(file)) {
+            return Result.error("不支持的文档类型");
+        }
         try {
             Integer currentUserId = AuthUtils.getCurrentUserId();
             String fileUrl = documentsService.uploadDocument(projectId, file, category, description, currentUserId);
 
+            //返回数据 前端没用到就是了
             Map<String, Object> data = new HashMap<>();
             data.put("url", fileUrl);
             data.put("fileName", file.getOriginalFilename());
@@ -65,12 +75,13 @@ public class DocumentsController {
     /**
      * 修改文档
      */
-    @RequirePermission(PermissionType.FILE_UPLOAD)
+    @RequirePermission(value = PermissionType.FILE_UPLOAD)
     @PutMapping
-    public Result updateDocument(@RequestBody Document document) {
+    public Result updateDocument(@RequestParam("projectId") Integer projectId,
+                                  @RequestBody Document document) {
         try {
             Integer currentUserId = AuthUtils.getCurrentUserId();
-            documentsService.updateDocument(document.getId(), document.getFileName(), 
+            documentsService.updateDocument(document.getId(), projectId, document.getFileName(), 
                                            document.getCategory().toString(), document.getDescription(), currentUserId);
             return Result.success("文档更新成功");
         } catch (Exception e) {
@@ -83,8 +94,9 @@ public class DocumentsController {
      * 删除文档
      */
     @RequirePermission(PermissionType.FILE_DELETE)
-    @DeleteMapping("/{id}")
-    public Result deleteDocument(@PathVariable Integer id) {
+    @DeleteMapping
+    public Result deleteDocument(@RequestParam("projectId") Integer projectId,
+                                   @RequestParam("id") Integer id) {
         try {
             Integer currentUserId = AuthUtils.getCurrentUserId();
             documentsService.deleteDocument(id, currentUserId);
@@ -173,39 +185,6 @@ public class DocumentsController {
         }
     }
 
-    /**
-     * 根据项目id查询项目文档
-     */
-    @RequirePermission(PermissionType.FILE_VIEW)
-    @GetMapping("/project/{projectId}")
-    public Result listByProjectId(@PathVariable Integer projectId,
-                                   @RequestParam(value = "category", required = false) String category,
-                                   @RequestParam(value = "fileName", required = false) String fileName,
-                                   @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
-                                   @RequestParam(value = "pageSize", required = false, defaultValue = "10") Integer pageSize) {
-        try {
-            log.info("查询项目文档 - projectId: {}, category: {}, fileName: {}, page: {}, pageSize: {}", 
-                    projectId, category, fileName, page, pageSize);
-            
-            List<Document> documents = documentsService.listByProjectId(projectId, category, fileName);
-            long total = documentsService.countByProjectId(projectId);
-            
-            log.info("查询结果 - 文档总数: {}, 分页后数量: {}", total, documents.size());
-            
-            int start = (page - 1) * pageSize;
-            int end = Math.min(start + pageSize, documents.size());
-            List<Document> pageData = documents.subList(start, end);
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("rows", pageData);
-            result.put("total", total);
-            
-            return Result.success(result);
-        } catch (Exception e) {
-            log.error("查询项目文档失败", e);
-            return Result.error("查询项目文档失败: " + e.getMessage());
-        }
-    }
 
     /**
      * 统计项目文档数量

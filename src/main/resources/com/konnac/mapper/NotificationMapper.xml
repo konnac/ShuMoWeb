@@ -12,21 +12,21 @@
         <result column="type" property="type"/>
         <result column="related_type" property="relatedType"/>
         <result column="related_id" property="relatedId"/>
-        <result column="active" property="isDeleted" typeHandler="com.konnac.handler.InverseBooleanTypeHandler"/>
+        <result column="isDeleted" property="isDeleted"/>
         <result column="is_read" property="isRead"/>
         <result column="created_at" property="createdAt"/>
     </resultMap>
 
     <sql id="commonSelect">
         select id, user_id, title, content, type, related_type,
-               related_id, active, is_read, created_at
+               related_id, NOT active as isDeleted, is_read, created_at
         from notifications
     </sql>
 
     <!-- 新增通知 -->
     <insert id="insert" parameterType="com.konnac.pojo.Notification" useGeneratedKeys="true" keyProperty="id">
         insert into notifications(user_id, title, content, type, related_type, related_id, active, is_read, created_at)
-        values(#{userId}, #{title}, #{content}, #{type}, #{relatedType}, #{relatedId}, 1, #{isRead}, #{createdAt})
+        values(#{userId}, #{title}, #{content}, #{type}, #{relatedType}, #{relatedId}, NOT #{isDeleted}, #{isRead}, #{createdAt})
     </insert>
 
     <!-- 标记已读 -->
@@ -125,7 +125,7 @@
         <foreach collection="notifications" item="notification" separator=",">
             (#{notification.userId}, #{notification.title}, #{notification.content},
             #{notification.type}, #{notification.relatedType}, #{notification.relatedId},
-            1, #{notification.isRead}, #{notification.createdAt})
+            NOT #{notification.isDeleted}, #{notification.isRead}, #{notification.createdAt})
         </foreach>
     </insert>
 
@@ -147,12 +147,6 @@
           and is_read = true
     </update>
 
-    <!-- 删除用户某个时间前的通知 -->
-    <update id="deleteByUserIdAndBeforeDate">
-        update notifications
-        set active = false
-        where user_id = #{userId}
-          and created_at <![CDATA[<=]]> #{beforeDate}
-    </update>
+
 
 </mapper>

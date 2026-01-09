@@ -63,33 +63,9 @@ public class NotificationController {
         }
     }
 
-    /**
-     * 发送通知给单个用户
-     */
-    @PostMapping("/send/to-user")
-    public Result sendNotificationToUser(Integer userId, String title, String content,
-                                         Notification.NotificationType type,
-                                         String relatedType, Integer relatedId) {
-        log.info("发送通知给单个用户，参数：userId={},title={},content={},type={},relatedType={},relatedId={}", userId, title, content, type, relatedType, relatedId);
-        notificationService.sendNotificationToUser(userId, title, content, type, relatedType, relatedId);
-        return Result.success();
-    }
 
-    /**
-     * 批量发送通知给多个用户
-     */
-    @PostMapping("/send/batch")
-    public Result sendBatchNotificationToUsers(
-            @RequestParam List<Integer> userIds,
-            String title,
-            String content,
-            Notification.NotificationType type,
-            String relatedType,
-            Integer relatedId) {
-        log.info("批量发送通知给多个用户，参数：userIds={},title={},content={},type={},relatedType={},relatedId={}", userIds, title, content, type, relatedType, relatedId);
-        notificationService.sendBatchNotificationToUsers(userIds, title, content, type, relatedType, relatedId);
-        return Result.success();
-    }
+
+
 
     /**
      * 批量发送通知给项目成员
@@ -135,15 +111,7 @@ public class NotificationController {
         return Result.success();
     }
 
-    /**
-     * 批量已读
-     */
-    @PostMapping("/read-batch")
-    public Result markAsReadBatch(@RequestBody List<Integer> notificationIds, @RequestParam Integer userId) {
-        log.info("批量已读，参数：notificationIds={}, userId={}", notificationIds, userId);
-        notificationService.markAsReadBatch(notificationIds, userId);
-        return Result.success();
-    }
+
 
     /**
      * 全部已读
@@ -221,14 +189,6 @@ public class NotificationController {
         return Result.success();
     }
 
-    /**
-     * 删除用户某个时间前通知
-     */
-    @DeleteMapping("/by-date")
-    public Result deleteNotificationsBeforeDate(@RequestParam Integer userId, @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam LocalDateTime beforeDate) {
-        log.info("删除用户某个时间前的通知: userId={}, beforeDate={}", userId, beforeDate);
-        notificationService.deleteNotificationsBeforeDate(userId, beforeDate);
-        return Result.success();
-    }
+
 
 }

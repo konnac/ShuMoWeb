@@ -362,16 +362,6 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("批量删除已读通知成功");
     }
 
-    /**
-     * 批量删除某时间前通知
-     */
-    @Transactional(timeout = 30, rollbackFor = Exception.class)
-    @Override
-    public void deleteNotificationsBeforeDate(Integer userId, LocalDateTime beforeDate) {
-        log.debug("正在批量删除某时间前通知: userId={}, beforeDate={}", userId, beforeDate);
-        notificationMapper.deleteByUserIdAndBeforeDate(userId, beforeDate);
-        log.info("批量删除某时间前通知成功");
-    }
 
 //============构建通知=============
 

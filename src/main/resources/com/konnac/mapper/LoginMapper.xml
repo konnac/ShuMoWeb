@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.konnac.mapper.LoginMapper">
-    <!--定义结果映射-->    
+    <!--定义结果映射 之前有bug-->
     <resultMap id="UserResultMap" type="com.konnac.pojo.User">
         <id property="id" column="id"/>
         <result property="username" column="username"/>

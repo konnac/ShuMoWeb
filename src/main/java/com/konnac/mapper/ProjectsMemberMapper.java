@@ -8,9 +8,6 @@ import java.util.List;
 @Mapper
 public interface ProjectsMemberMapper {
 
-    //验证项目成员是否存在
-    boolean isMemberExist(Integer projectId, Integer userId);
-
     //添加项目成员
     void addProjectMember(ProjectMember projectMember);
 
@@ -19,12 +16,6 @@ public interface ProjectsMemberMapper {
 
     //软删除项目成员
     void updateProjectMember(ProjectMember projectMember);
-
-    //获取项目成员列表
-    List<ProjectMember> findActiveByProjectId(Integer projectId);
-
-    //根据用户id获取项目成员
-    List<ProjectMember> findByUserId(Integer userId);
 
     //获取项目成员id列表
     List<Integer> getProjectMembersIds(Integer projectId);

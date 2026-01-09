@@ -47,10 +47,6 @@ public interface NotificationMapper {
      */
     void deleteAllReadByUserId(Integer userId);
 
-    /**
-     * 批量删除某时间前的通知
-     */
-    void deleteByUserIdAndBeforeDate(Integer userId, LocalDateTime beforeDate);
 
     /**
      * 软删除通知

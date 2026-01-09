@@ -85,12 +85,6 @@
                 and p.status = #{status}
             </if>
 
-            <!-- 创建时间范围查询 - 如果不需要，可以删除这部分 -->
-            <!--
-            <if test="createdBegin != null and createdEnd != null">
-                and p.created_time between #{createdBegin} and #{createdEnd}
-            </if>
-            -->
         </where>
         GROUP BY p.id
         order by p.created_time desc
@@ -124,12 +118,6 @@
                 and p.status = #{status}
             </if>
 
-            <!-- 创建时间范围查询 - 如果不需要，可以删除这部分 -->
-            <!--
-            <if test="createdBegin != null and createdEnd != null">
-                and p.created_time between #{createdBegin} and #{createdEnd}
-            </if>
-            -->
         </where>
         ORDER BY p.created_time DESC
     </select>

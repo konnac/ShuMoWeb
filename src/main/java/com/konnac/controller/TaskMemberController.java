@@ -39,27 +39,6 @@ public class TaskMemberController {
     }
 
     /**
-     * 批量添加任务成员
-     */
-    @RequirePermission(value = PermissionType.TASK_ASSIGN, checkTask = true)
-    @PostMapping("/batch")
-    public Result addTaskMembers(@PathVariable Integer projectId, @PathVariable Integer taskId, @RequestBody List<Integer> taskMembers){
-        log.info("批量添加任务成员，项目id：{}，任务id：{}，任务成员id列表：{}", projectId, taskId, taskMembers);
-        // 调用Service，得到批量操作结果
-        BatchResult batchResult = taskMemberService.addTaskMembers(taskId, taskMembers, UserContext.getCurrentUserId());
-
-        // 包装为统一的Result返回给前端
-        if (batchResult.isAllSuccess()) {
-            return Result.success("全部添加成功", batchResult);
-        } else if (batchResult.getFailureCount() > 0) {
-            // 部分成功，使用特定状态码
-            return Result.error(201, "部分添加成功", batchResult);
-        } else {
-            return Result.error("添加失败", batchResult);
-        }
-    }
-
-    /**
      * 删除任务成员
      */
     @RequirePermission(value = PermissionType.TASK_ASSIGN, checkTask = true)

@@ -30,7 +30,7 @@ import java.lang.reflect.Method;
 @Slf4j
 @Aspect
 @Component
-@Order(1) // 在事务之前执行
+@Order(1) // 在事务之前执行,防止性能浪费\扰乱日志\或者有些数据bug
 public class PermissionAspect {
 
     @Autowired
@@ -47,14 +47,24 @@ public class PermissionAspect {
     private TasksMapper tasksMapper;
 
 
-    @Before("@annotation(requirePermission)")
+    //
+    @Before("@annotation(requirePermission)") //目标方法执行之前执行切面逻辑,匹配带有特定注解的方法:@RequirePermission
     public void checkPermission(JoinPoint joinPoint, RequirePermission requirePermission) {
-        // 1. 从请求头获取token并解析
+        // 1.从请求头获取token并解析
+            //RequestContextHolder 获取当前线程的请求上下文信息
+            //getRequestAttributes() 获取当前线程的Servlet请求属性
+            //请求属性（ServletRequestAttributes）是spring对HTTP请求的封装,它确实代表了前端发送的HTTP请求
+            //Authorization 请求头用于身份验证的部分
+        // 切面中无法直接获取ServletRequest 需要获取当前线程的Servlet请求属性
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        // 如果当前线程的请求属性为空
         if (attributes == null) {
             throw new BusinessException("请求属性获取失败");
         }
+        // 2. 获取HTTP请求对象
         HttpServletRequest request = attributes.getRequest();
+
+        // 3. 获取请求头中的Authorization
         String authorization = request.getHeader("Authorization");
         
         // 处理Bearer前缀
@@ -126,6 +136,7 @@ public class PermissionAspect {
 
     /**
      * 从方法参数中提取项目ID
+     * @param joinPoint:可以被 AOP 控制的方法
      */
     private Integer extractProjectId(JoinPoint joinPoint, RequirePermission annotation) {
         // 获取方法参数值
@@ -135,9 +146,10 @@ public class PermissionAspect {
 
     //====从方法参数中提取项目id====
 
-        // 指定了参数名，直接获取
+        // 指定了参数名(projectIdParam)，直接获取
         if (!annotation.projectIdParam().isEmpty()) {
             for (int i = 0; i < paramNames.length; i++) {
+                // 匹配参数名,相等则获取
                 if (annotation.projectIdParam().equals(paramNames[i])) {
                     Object arg = args[i];
                     return extractInteger(arg);
@@ -147,20 +159,25 @@ public class PermissionAspect {
 
         // 尝试从常见参数名中查找
         String[] commonNames = {"projectId", "id", "pid"};
+        // 遍历参数名
         for (int i = 0; i < paramNames.length; i++) {
             for (String commonName : commonNames) {
                 if (commonName.equals(paramNames[i])) {
                     Object arg = args[i];
+                    // 匹配成功则获取
                     return extractInteger(arg);
                 }
             }
         }
 
-        // 尝试从对象中查找 (反射)
+        // 尝试从对象中查找 (反射) 遍历参数对象
         for (Object arg : args) {
             if (arg != null && arg.getClass().getSimpleName().contains("Project")) {
+                //获取到项目对象则尝试获取项目ID
                 try {
+                    //获取getID的方法
                     Method getIdMethod = arg.getClass().getMethod("getId");
+                    //调用getId方法获取项目ID
                     Object idObj = getIdMethod.invoke(arg);
                     return extractInteger(idObj);
                 } catch (Exception e) {
@@ -169,16 +186,20 @@ public class PermissionAspect {
             }
         }
 
-        // 如果从参数中找不到，尝试从URL路径中提取
+        // 如果从参数中找不到,尝试从URL路径中提取,几乎所有项目接口都满足这个条件
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        // 如果当前线程的请求属性不为空
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
+            // 获取请求URI即路径部分
             String uri = request.getRequestURI();
             // 匹配 /projects/{projectId}/... 格式的URL
             if (uri.contains("/projects/")) {
+                //按照分隔符（/）将字符串拆分成数组
                 String[] parts = uri.split("/");
                 for (int i = 0; i < parts.length; i++) {
                     if ("projects".equals(parts[i]) && i + 1 < parts.length) {
+                        // projects 后一个元素是项目ID
                         String idStr = parts[i + 1];
                         // 处理批量删除的情况（逗号分隔的IDs）
                         if (idStr.contains(",")) {
@@ -206,7 +227,7 @@ public class PermissionAspect {
         // 获取方法参数名
         String[] paramNames = ((MethodSignature) joinPoint.getSignature()).getParameterNames();
 
-        //====从方法参数中提取任务id====
+        //====从方法参数中提取任务id==== 几乎不用所以没写
 
         // 尝试从常见参数名中查找
         String[] commonNames = {"taskId", "id", "pid"};
@@ -223,7 +244,9 @@ public class PermissionAspect {
         for (Object arg : args) {
             if (arg != null && arg.getClass().getSimpleName().contains("Task")) {
                 try {
+                    //获取getID的方法
                     Method getIdMethod = arg.getClass().getMethod("getId");
+                    //调用getId方法获取任务ID
                     Object idObj = getIdMethod.invoke(arg);
                     return extractInteger(idObj);
                 } catch (Exception e) {
@@ -235,24 +258,26 @@ public class PermissionAspect {
         // 如果从参数中找不到，尝试从URL路径中提取
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
+            // 获取请求URI即路径部分
             HttpServletRequest request = attributes.getRequest();
+            // 获取请求URI即路径部分
             String uri = request.getRequestURI();
             // 匹配 /projects/{projectId}/tasks/{taskId} 格式的URL
             if (uri.contains("/tasks/")) {
                 String[] parts = uri.split("/");
                 for (int i = 0; i < parts.length; i++) {
                     if ("tasks".equals(parts[i]) && i + 1 < parts.length) {
+                        // tasks 后一个元素是任务ID
                         return extractInteger(parts[i + 1]);
                     }
                 }
             }
         }
-
         return null;
     }
 
     /**
-     * 安全转为整数
+     * 普通的安全转为整数~
      */
     private Integer extractInteger(Object obj) {
         if (obj instanceof Integer) {
@@ -271,6 +296,7 @@ public class PermissionAspect {
 
     /**
      * 内部权限验证逻辑
+     * @param permissionType 权限类型
      */
     private boolean checkPermissionInternal(PermissionType permissionType,
                                             Integer userId,
@@ -298,6 +324,7 @@ public class PermissionAspect {
                 // 查看自己的项目列表不需要具体项目权限
                 case PROJECT_VIEW:
                     return true;
+                // 查看所有项目权限,没用上,因为管理员在上面就验证过了..不过不改了怕出什么bug
                 case PROJECT_VIEW_ALL:
                     return checkAdminPermission(userId);
 

@@ -17,22 +17,25 @@ public class PageHelperUtils {
      * 安全执行分页查询
      * @param page 页码
      * @param pageSize 分页大小
-     * @param querySupplier 查询方法
+     * @param querySupplier 函数式接口作为方法参数,查询方法:接收一个"能返回List的函数"
      * @param <T> 返回类型
      * @return 分页结果
      */
     public static <T> PageInfo<T> safePageQuery(Integer page, Integer pageSize, Supplier<List<T>> querySupplier){
+        // 页码和分页大小不能小于1
         if(page == null || page < 1){
             page = 1;
         }
         if(pageSize == null || pageSize < 1){
             pageSize = 10;
         }
+        // 分页大小不能超过1000 估计够大
         if(pageSize > 1000){
             log.warn("分页大小超过限制,自动调整为1000");
         }
 
         try{
+            // 开始分页
             PageHelper.startPage(page, pageSize);
             List<T> list = querySupplier.get();
             return new PageInfo<>(list);
@@ -45,7 +48,7 @@ public class PageHelperUtils {
     }
 
     /**
-     * 验证分页参数
+     * 验证分页参数 上面已经验证了
      */
     public static void validatePageParams(Integer page, Integer pageSize) {
         if (page == null || page < 1) {
@@ -63,14 +66,14 @@ public class PageHelperUtils {
     }
 
     /**
-     * 获取安全的页码
+     * 获取安全的页码 多定义了
      */
     public static int getSafePage(Integer page) {
         return (page == null || page < 1) ? 1 : page;
     }
 
     /**
-     * 获取安全的分页大小
+     * 获取安全的分页大小 多定义了
      */
     public static int getSafePageSize(Integer pageSize) {
         if (pageSize == null || pageSize < 1) {

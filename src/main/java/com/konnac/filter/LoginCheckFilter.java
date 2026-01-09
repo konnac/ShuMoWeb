@@ -24,7 +24,7 @@ public class LoginCheckFilter implements Filter {
         this.usersMapper = usersMapper;
     }
 
-    // 白名单列表
+    // 白名单列表 其实也就只用上了登录
     private static final String[] WHITE_LIST = {
             "/login",
             "/register",
@@ -40,11 +40,11 @@ public class LoginCheckFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
                          FilterChain filterChain) throws IOException, ServletException {
-        HttpServletRequest req = (HttpServletRequest) servletRequest;
-        HttpServletResponse resp = (HttpServletResponse) servletResponse;
+        HttpServletRequest req = (HttpServletRequest) servletRequest; //强转请求,转换后可以访问HTTP请求的特定功能
+        HttpServletResponse resp = (HttpServletResponse) servletResponse; //强转响应,转换后可以访问HTTP响应的特定功能
 
         // 1. 获取请求url
-        String url = req.getRequestURL().toString();
+        String url = req.getRequestURL().toString(); //获取请求的URL转换成字符串
         log.info("拦截的url：{}", url);
 
         // 2. 检查是否是白名单
@@ -54,33 +54,44 @@ public class LoginCheckFilter implements Filter {
             return;
         }
 
-        // 3. 判断请求url中是否包含login，如果包含，说明是登录操作，放行。
+        // 3. 判断请求url中是否包含login，如果包含，说明是登录操作，放行。(白名单里有了,但是没改)
         if (url.contains("login")){
             log.info("登录操作放行");
-            filterChain.doFilter(servletRequest, servletResponse);
-            return;
+            filterChain.doFilter(servletRequest, servletResponse); //放行
+            return; //跳过后面的过滤器，直接返回结果
         }
 
+        //前端发送的氢气示例
+
+        //headers: {
+        //    'Authorization': `Bearer ${token}`  // 必须使用 "Authorization"
+        //  }
+
         // 4. 获取请求头中的令牌（token）
-        String jwt = req.getHeader("Authorization");
+        String jwt = req.getHeader("Authorization"); //用于身份认证的请求头
         
         // 处理Bearer前缀
         if (StringUtils.hasLength(jwt) && jwt.startsWith("Bearer ")) {
+            //截取第七个字符后的内容作为真正的JWT令牌
             jwt = jwt.substring(7);
         }
 
         // 5. 判断令牌是否存在，如果不存在，返回错误结果（未登录）
         if (!StringUtils.hasLength(jwt)){
             log.info("请求头token为空, 返回未登录的信息");
-            Result error = Result.error("NOT_LOGIN");
-            String notLogin = JSONObject.toJSONString(error);
+            // Filter 的 doFilter() 方法返回类型是 void
+            // 无法直接返回对象，必须手动处理响应
+            Result error = Result.error("NOT_LOGIN"); //创建错误结果
+            // 手动转换成 JSON
+            String notLogin = JSONObject.toJSONString(error); //转换成JSON字符串
+            // 手动写入响应体
             resp.getWriter().write(notLogin);
             return;
         }
 
         // 6. 解析token，如果解析失败，返回错误结果（未登录）
         try {
-            // 解析token验证有效性
+            // 解析token
             JwtUtils.parseJWT(jwt);
 
             // 从token中获取用户ID
@@ -98,7 +109,7 @@ public class LoginCheckFilter implements Filter {
             }
 
 
-            // 查询用户信息（根据需要决定是否查询完整信息）
+            // 查询用户信息 保证令牌确实有效
             User user = usersMapper.getUserById(userId);
             if (user == null) {
                 log.warn("用户不存在: userId={}", userId);
@@ -106,15 +117,18 @@ public class LoginCheckFilter implements Filter {
             }
 
             // 设置用户上下文
-            UserContext.setCurrentUserId(userId);
-            UserContext.setCurrentUserRole(userRole);
-            UserContext.setCurrentUser(user);
+            UserContext.setCurrentUserId(userId); //设置用户ID
+            UserContext.setCurrentUserRole(userRole); //设置用户角色
+            UserContext.setCurrentUser(user); //设置用户信息
             log.debug("设置用户上下文: userId={}, username={}, userRole={}", userId, user.getUsername(), userRole);
 
         } catch (Exception e) {
             log.info("令牌验证失败: {}", e.getMessage());
+            // 返回错误结果（未登录）
             Result error = Result.error("NOT_LOGIN");
+            // 手动转换成 JSON
             String notLogin = JSONObject.toJSONString(error);
+            // 手动写入响应体
             resp.getWriter().write(notLogin);
             return;
         }
@@ -124,6 +138,11 @@ public class LoginCheckFilter implements Filter {
         filterChain.doFilter(servletRequest, servletResponse);
     }
 
+    /**
+     * 检查是否是白名单
+     * @param url 请求url
+     * @return true:是白名单 false:不是
+     */
     private boolean checkWhiteList(String url) {
         for (String whiteUrl : WHITE_LIST){
             if (url.contains(whiteUrl)){

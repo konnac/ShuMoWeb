@@ -3,7 +3,23 @@ package com.konnac.context;
 import com.konnac.pojo.User;
 import lombok.Data;
 
+/**
+ * 用户上下文类
+ * 使用ThreadLocal存储当前线程的用户信息
+ * 核心作用：
+ * 1. 请求链中共享用户信息
+ * 2. 避免在每个方法参数中传递id 可以直接获取当前操作人的id
+ * 3. 线程之间互不影响
+ * 使用场景：
+ *  LoginCheckFilter：设置用户上下文
+ *  PermissionAspect：获取用户信息进行权限验证
+ *  Controller/Service：获取当前用户信息
+ *  UserContextCleanupInterceptor：清理用户上下文
+ */
+
 public class UserContext {
+    //
+
     // 当前用户id
     private static ThreadLocal<Integer> currentUserId = new ThreadLocal<>();
     // 当前用户

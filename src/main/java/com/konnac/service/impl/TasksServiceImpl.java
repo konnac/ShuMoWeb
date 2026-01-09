@@ -56,7 +56,9 @@ public class TasksServiceImpl implements TasksService {
         }
     }
 
-    //批量删除任务
+    /**
+     * 批量删除任务
+     */
     @RequirePermission(value = PermissionType.TASK_DELETE, checkTask = true)
     @Override
     public void deleteTask(Integer[] ids) {
@@ -106,9 +108,9 @@ public class TasksServiceImpl implements TasksService {
         return task;
     }
 
-    //修改任务
+
     /**
-     * 更新任务信息
+     * 修改任务信息
      * 该方法用于更新任务的基本信息，同时处理任务负责人变更时的相关逻辑
      * 包括权限验证、任务信息校验、负责人角色调整等操作
      *
@@ -302,11 +304,15 @@ public class TasksServiceImpl implements TasksService {
         return stats;
     }
 
+    // 获取指定用户的任务总数
     @Override
     public long getUserTaskCount(Integer userId) {
         return tasksMapper.getUserTaskCount(userId);
     }
 
+    /**
+     * 获取指定用户的任务状态统计
+     */
     @Override
     public UserOverview.TaskStatusStats getUserTaskStats(Integer userId) {
         log.debug("获取用户任务状态统计，userId={}", userId);
@@ -376,11 +382,17 @@ public class TasksServiceImpl implements TasksService {
         return stats;
     }
 
+    /**
+     * 获取项目经理负责项目下的任务总数
+     */
     @Override
     public long getManagerTaskCount(Integer userId) {
         return tasksMapper.getManagerTaskCount(userId);
     }
 
+    /**
+     * 获取项目经理负责项目下的任务状态统计
+     */
     @Override
     public UserOverview.TaskStatusStats getManagerTaskStats(Integer userId) {
         log.debug("获取项目经理任务状态统计，userId={}", userId);
@@ -450,6 +462,9 @@ public class TasksServiceImpl implements TasksService {
         return stats;
     }
 
+    /**
+     * 分页查询指定用户的任务
+     */
     @Override
     public PageBean pageMyTasks(Integer page,
                                 Integer pageSize,
@@ -483,7 +498,6 @@ public class TasksServiceImpl implements TasksService {
         log.info("分页查询我的任务成功，结果：{}", pageBean);
         return new PageBean(pageBean.getTotal(), pageBean.getList());
     }
-
 
 
 
