@@ -2,6 +2,7 @@ package com.konnac.mapper;
 
 import com.konnac.pojo.ProjectMember;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -25,4 +26,10 @@ public interface ProjectsMemberMapper {
 
     //批量禁用项目成员
     void disableMembersByProjectId(Integer projectId);
+
+    /**
+     * 获取项目中激活状态的项目经理数量
+     */
+    @Select("SELECT COUNT(*) FROM project_members WHERE project_id = #{projectId} AND project_role = 'PROJECT_MANAGER' AND status = 'ACTIVE'")
+    long countActiveManagers(Integer projectId);
 }

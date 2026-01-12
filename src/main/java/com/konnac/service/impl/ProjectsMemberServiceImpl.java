@@ -213,7 +213,6 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
     @Override
     public void activateMember(Integer projectId, Integer userId, Integer operatorId) {
         log.debug("激活项目成员: projectId={}, userId={}, operatorId={}", projectId, userId, operatorId);
-
         Project project = projectsMapper.getProjectById(projectId);
         if (project == null) {
             log.warn("项目不存在: projectId={}", projectId);
@@ -231,9 +230,19 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
             throw new BusinessException("项目成员不存在");
         }
 
+
+
         if (projectMember.getStatus() == ProjectMember.MemberStatus.ACTIVE) {
             log.warn("项目成员已经是激活状态: projectId={}, userId={}", projectId, userId);
             throw new BusinessException("项目成员已经是激活状态");
+        }
+
+        if (ProjectRole.PROJECT_MANAGER.name().equals(projectMember.getProjectRole())) {
+            long activeManagerCount = projectsMemberMapper.countActiveManagers(projectId);
+            if (activeManagerCount >= 1) {
+                log.warn("项目已有一个项目经理，不能再激活新的项目经理: projectId={}, userId={}", projectId, userId);
+                throw new BusinessException("一个项目只能有一个项目经理");
+            }
         }
 
         projectMember.setStatus(ProjectMember.MemberStatus.ACTIVE);

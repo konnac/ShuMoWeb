@@ -245,7 +245,7 @@ public class TasksServiceImpl implements TasksService {
      */
     @Override
     public AdminOverview.TaskStatusStats getTaskStatsOptimized() {
-        log.debug("获取任务状态统计（优化版）");
+        log.debug("获取任务状态统计");
 
         AdminOverview adminOverview = new AdminOverview();
         AdminOverview.TaskStatusStats stats = adminOverview.new TaskStatusStats();
@@ -260,6 +260,8 @@ public class TasksServiceImpl implements TasksService {
             stats.setPending(0);
             stats.setCompleted(0);
             stats.setCancelled(0);
+
+            long totalTasks = 0;
 
             // 遍历查询结果，设置对应的状态数量
             for (Map<String, Object> map : statusList) {
@@ -291,6 +293,9 @@ public class TasksServiceImpl implements TasksService {
                 }
             }
 
+            double totalHour = tasksMapper.getAllTotalHours();
+            stats.setTotalHour(totalHour);
+
         } catch (Exception e) {
             log.error("获取任务状态统计失败", e);
             // 返回空统计
@@ -299,6 +304,7 @@ public class TasksServiceImpl implements TasksService {
             stats.setPending(0);
             stats.setCompleted(0);
             stats.setCancelled(0);
+            stats.setTotalHour(0);
         }
 
         return stats;
@@ -439,7 +445,7 @@ public class TasksServiceImpl implements TasksService {
                 }
             }
 
-            double totalHour = tasksMapper.getUserTotalHours(userId);
+            double totalHour = tasksMapper.getManagerTotalHours(userId);
             stats.setTotalHour(totalHour);
 
             double delayRate = 0;

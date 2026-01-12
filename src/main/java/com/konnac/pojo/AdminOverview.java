@@ -17,5 +17,6 @@ public class AdminOverview {
         private long pending;       // 待完成
         private long completed;     // 已完成
         private long cancelled;     // 已取消
+        private double totalHour;   // 总工时
     }
 }

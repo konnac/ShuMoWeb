@@ -61,6 +61,12 @@ public interface TasksMapper {
     List<Map<String, Object>> countAllStatus();
 
     /**
+     * 获取所有任务的总工时（实际工时总和）
+     */
+    @Select("SELECT COALESCE(SUM(actual_hours), 0) FROM tasks WHERE actual_hours IS NOT NULL")
+    double getAllTotalHours();
+
+    /**
      * 获取指定用户的任务总数
      */
     @Select("SELECT COUNT(*) FROM tasks WHERE assignee_id = #{userId}")
@@ -89,6 +95,12 @@ public interface TasksMapper {
      */
     @Select("SELECT status, COUNT(*) as count FROM tasks t WHERE t.project_id IN (SELECT id FROM projects WHERE manager_id = #{userId}) GROUP BY status")
     List<Map<String, Object>> getManagerTaskStats(Integer userId);
+
+    /**
+     * 获取项目经理负责项目下的总工时（实际工时总和）
+     */
+    @Select("SELECT COALESCE(SUM(actual_hours), 0) FROM tasks t WHERE t.project_id IN (SELECT id FROM projects WHERE manager_id = #{userId}) AND actual_hours IS NOT NULL")
+    double getManagerTotalHours(Integer userId);
 
     /**
      * 查询"我的任务" - 根据用户角色返回不同的任务列表
