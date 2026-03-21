@@ -12,6 +12,7 @@ import com.konnac.utils.PageHelperUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class UsersServiceImpl implements UsersService {
     public void addUser(User user) {
         user.setCreatedTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
+        user.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
         UsersMapper.addUser(user);
     }
 
@@ -51,6 +53,7 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public void updateUserAdmin(User user) {
         user.setUpdateTime(LocalDateTime.now());
+        user.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
         UsersMapper.updateUserAdmin(user);
     }
 
@@ -61,6 +64,7 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public void updateUser(User user) {
         user.setUpdateTime(LocalDateTime.now());
+        user.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
         UsersMapper.updateUser(user);
     }
 
@@ -115,13 +119,13 @@ public class UsersServiceImpl implements UsersService {
      */
     @Override
     public void changePassword(Integer id, String oldPassword, String newPassword) {
-        boolean isValid = UsersMapper.verifyOldPassword(id, oldPassword);
+        boolean isValid = UsersMapper.verifyOldPassword(id, DigestUtils.md5DigestAsHex(oldPassword.getBytes()));
         if (!isValid) {
             throw new RuntimeException("原密码错误");
         }
         User user = new User();
         user.setId(id);
-        user.setPassword(newPassword);
+        user.setPassword(DigestUtils.md5DigestAsHex(newPassword.getBytes()));
         user.setUpdateTime(LocalDateTime.now());
         UsersMapper.updateUser(user);
     }

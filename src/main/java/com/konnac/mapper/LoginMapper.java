@@ -7,4 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 public interface LoginMapper {
     //验证用户名密码
     User getByUserNameAndPassword(User user);
+
+    //验证用户名
+    User getByUsername(String username);
 }
