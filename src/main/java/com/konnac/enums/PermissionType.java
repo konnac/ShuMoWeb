@@ -29,6 +29,7 @@ public enum PermissionType {
     TASK_ASSIGN("分配任务"),
 
     // 通知权限
+    NOTIFICATION_MEMBERVIEW("查看通知的成员列表"),
     NOTIFICATION_SEND("发送通知(管理)"),
     NOTIFICATION_SEND_TASK("发送通知(任务)"),
     NOTIFACATION_SEND_ADMIN("发送系统通知(管理员)"),

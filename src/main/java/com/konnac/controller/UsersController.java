@@ -5,6 +5,7 @@ package com.konnac.controller;
  */
 
 import com.konnac.annotation.RequirePermission;
+import com.konnac.enums.PermissionType;
 import com.konnac.pojo.PageBean;
 import com.konnac.pojo.Result;
 import com.konnac.pojo.User;
@@ -57,6 +58,7 @@ public class UsersController {
     }
 
     //分页条件查询
+    @RequirePermission(value = PermissionType.USER_VIEW_SIMPLE, checkProject = false)
     @RequestMapping
     public Result page(@RequestParam(defaultValue = "1") Integer page,
                        @RequestParam(defaultValue = "10") Integer pageSize,
@@ -87,5 +89,31 @@ public class UsersController {
         log.info("修改密码，用户id：{}", user.getId());
         usersService.changePassword(user.getId(), user.getOldPassword(), user.getPassword());
         return Result.success();
+    }
+
+    //获取项目经理列表
+    @GetMapping("/project-managers")
+    public Result getProjectManagers() {
+        log.info("获取项目经理列表");
+        List<User> projectManagers = usersService.getProjectManagers();
+        return Result.success(projectManagers);
+    }
+
+    //获取可用用户列表（用于项目成员选择）
+    @RequirePermission(value = PermissionType.MEMBER_ADD)
+    @GetMapping("/available-users")
+    public Result getAvailableUsers() {
+        log.info("获取可用用户列表");
+        List<User> availableUsers = usersService.getAvailableUsers();
+        return Result.success(availableUsers);
+    }
+
+    //获取通知接收人列表
+    @RequirePermission(value = PermissionType.NOTIFICATION_MEMBERVIEW,checkProject = false)
+    @GetMapping("/notification-recipients")
+    public Result getNotificationRecipients() {
+        log.info("获取通知接收人列表");
+        List<User> recipients = usersService.getNotificationRecipients();
+        return Result.success(recipients);
     }
 }

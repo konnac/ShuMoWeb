@@ -55,4 +55,19 @@ public interface UsersService {
      * 修改密码
      */
     void changePassword(Integer id, String oldPassword, String newPassword);
+
+    /**
+     * 获取项目经理列表
+     */
+    List<User> getProjectManagers();
+
+    /**
+     * 获取可用用户列表（用于项目成员选择）
+     */
+    List<User> getAvailableUsers();
+
+    /**
+     * 获取通知接收人列表
+     */
+    List<User> getNotificationRecipients();
 }

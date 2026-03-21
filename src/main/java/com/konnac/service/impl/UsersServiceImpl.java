@@ -130,5 +130,29 @@ public class UsersServiceImpl implements UsersService {
         UsersMapper.updateUser(user);
     }
 
+    /**
+     * 获取项目经理列表
+     */
+    @Override
+    public List<User> getProjectManagers() {
+        return UsersMapper.list(null, null, null, User.UserRole.PROJECT_MANAGER, null, null, null);
+    }
+
+    /**
+     * 获取可用用户列表（用于项目成员选择）
+     */
+    @Override
+    public List<User> getAvailableUsers() {
+        return UsersMapper.list(null, null, null, null, null, null, null);
+    }
+
+    /**
+     * 获取通知接收人列表
+     */
+    @Override
+    public List<User> getNotificationRecipients() {
+        return UsersMapper.list(null, null, null, null, null, null, null);
+    }
+
 
 }

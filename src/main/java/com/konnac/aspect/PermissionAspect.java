@@ -47,6 +47,7 @@ public class PermissionAspect {
     private TasksMapper tasksMapper;
 
 
+
     //
     @Before("@annotation(requirePermission)") //目标方法执行之前执行切面逻辑,匹配带有特定注解的方法:@RequirePermission
     public void checkPermission(JoinPoint joinPoint, RequirePermission requirePermission) {
@@ -342,6 +343,9 @@ public class PermissionAspect {
                     return checkNomalMemberPermission(projectId, userId);
 
                 // 管理层可发布通知
+                case NOTIFICATION_MEMBERVIEW:
+                    return AuthUtils.hasRole(User.UserRole.PROJECT_MANAGER.name());
+
                 case NOTIFICATION_SEND:
                     return checkProjectManagerPermission(projectId, userId);
                 case NOTIFICATION_SEND_TASK:
@@ -371,7 +375,7 @@ public class PermissionAspect {
                 case USER_UPDATE:
                     checkUserId(userId);
                 case USER_VIEW_SIMPLE:
-                    return true;
+                    return false;
 
                 case FILE_UPLOAD:
                 case FILE_VIEW:
