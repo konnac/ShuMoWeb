@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.ProjectsMemberMapper">
+
+
+<!--新增项目成员-->
+    <insert id="addProjectMember">
+        insert into project_members (project_id, user_id, project_role, join_by, status, join_date)
+        values (#{projectId}, #{userId}, #{projectRole}, #{joinBy}, #{status}, #{joinDate})
+    </insert>
+<!--根据项目id和用户id获取项目内成员-->
+    <select id="getMemberByProjectIdAndUserId" resultType="com.konnac.ProjectMember">
+        select *
+        from project_members
+        where project_id = #{projectId}
+        and user_id = #{userId}
+    </select>
+<!--软删除项目成员-->
+    <update id="updateProjectMember">
+        UPDATE project_members
+        <set>
+            <if test="projectRole != null and projectRole != ''">
+                project_role = #{projectRole},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="joinBy != null">
+                join_by = #{joinBy},
+            </if>
+            <if test="joinDate != null">
+                join_date = #{joinDate},
+            </if>
+            <if test="updateTime != null">
+                updated_time = #{updateTime}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="list" resultType="com.konnac.ProjectMember">
+        select pm.*,
+        u.username,
+        u.real_name as realName,
+        u.email,
+        u.phone,
+        u.avatar,
+        u.department
+        from project_members pm
+        left join users u on pm.user_id = u.id
+        <where>
+            <if test="projectId != null">
+                and pm.project_id = #{projectId}
+            </if>
+            <if test="name != null and name != ''">
+                and u.username like concat('%', #{name}, '%')
+            </if>
+            <if test="realName != null and realName != ''">
+                and u.real_name like concat('%', #{realName}, '%')
+            </if>
+            <if test="userRole != null and userRole != ''">
+                and pm.project_role like concat('%', #{userRole}, '%')
+            </if>
+            <if test="department != null and department != ''">
+                and u.department like concat('%', #{department}, '%')
+            </if>
+            <if test="isAdmin == null or isAdmin == false">
+                and pm.status = 'ACTIVE'
+            </if>
+        </where>
+        Order by pm.id desc
+    </select>
+<!--根据项目id获取项目成员id列表-->
+    <select id="getProjectMembersIds" resultType="java.lang.Integer">
+        select user_id
+        from project_members
+        where project_id = #{projectId}
+        and status = 'ACTIVE'
+    </select>
+
+<!--批量禁用项目成员-->
+    <update id="disableMembersByProjectId">
+        UPDATE project_members
+        SET status = 'INACTIVE',
+            updated_time = NOW()
+        WHERE project_id = #{projectId}
+          AND status = 'ACTIVE'
+    </update>
+
+
+</mapper>

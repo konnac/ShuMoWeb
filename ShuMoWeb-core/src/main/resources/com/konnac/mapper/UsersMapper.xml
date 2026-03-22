@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.UsersMapper">
+
+    <sql id="commonSelect">
+        SELECT id, username, password, role, real_name, email, department, department_id, phone, avatar, created_time, update_time
+        FROM users
+    </sql>
+
+    <!-- 新增员工 -->
+    <insert id="addUser" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (
+            username, password, role, real_name, email, phone, avatar, created_time, update_time
+        ) VALUES (
+                     #{username}, #{password}, #{role}, #{realName}, #{email}, #{phone}, #{avatar}, #{createdTime}, #{updateTime}
+                 )
+    </insert>
+
+    <!-- 批量删除员工 -->
+    <delete id="deleteUser">
+        DELETE FROM users
+        WHERE id IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 修改员工信息(管理员) -->
+    <update id="updateUserAdmin">
+        UPDATE users
+        <set>
+            <if test="username != null and username.trim() != ''">
+                username = #{username},
+            </if>
+            <if test="realName != null and realName.trim() != ''">
+                real_name = #{realName},
+            </if>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="role != null">
+                role = #{role},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="avatar != null">
+                avatar = #{avatar},
+            </if>
+            <if test="department != null">
+                department = #{department},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 修改员工信息(普通) -->
+    <update id="updateUser">
+        UPDATE users
+        <set>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="avatar != null">
+                avatar = #{avatar},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 分页查询 -->
+    <select id="list" resultType="com.konnac.User">
+        <include refid="commonSelect"/>
+        <where>
+            <if test="id != null">
+                AND id = #{id}
+            </if>
+            <if test="username != null and username.trim() != ''">
+                AND username LIKE CONCAT('%', #{username}, '%')
+            </if>
+            <if test="realName != null and realName.trim() != ''">
+                AND real_name LIKE CONCAT('%', #{realName}, '%')
+            </if>
+            <if test="role != null">
+                AND role = #{role}
+            </if>
+            <if test="excludeRoles != null and excludeRoles.size() > 0">
+                AND role NOT IN
+                <foreach collection="excludeRoles" item="excludeRole" separator="," open="(" close=")">
+                    #{excludeRole}
+                </foreach>
+            </if>
+            <!-- 时间范围查询 -->
+            <choose>
+                <when test="begin != null and end != null">
+                    AND created_time BETWEEN #{begin} AND #{end}
+                </when>
+                <when test="begin != null">
+                    AND created_time >= #{begin}
+                </when>
+                <when test="end != null">
+                    AND #{end} >= created_time
+                </when>
+            </choose>
+        </where>
+        <!-- 添加排序，提高查询可预测性 -->
+        ORDER BY id
+    </select>
+</mapper>

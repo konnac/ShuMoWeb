@@ -1,0 +1,158 @@
+package com.konnac.service.impl;
+
+import com.github.pagehelper.PageInfo;
+import com.konnac.PageBean;
+import com.konnac.User;
+import com.konnac.annotation.RequirePermission;
+import com.konnac.enums.PermissionType;
+import com.konnac.exception.BusinessException;
+import com.konnac.mapper.UsersMapper;
+
+import com.konnac.service.UsersService;
+import com.konnac.utils.PageHelperUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Transactional(rollbackFor = Exception.class, timeout = 15)
+@Service
+public class UsersServiceImpl implements UsersService {
+    @Autowired
+    private UsersMapper UsersMapper;
+
+//==================增删改方法=======================
+    /**
+     * 添加用户
+     */
+    @RequirePermission(value = PermissionType.USER_ADD, checkProject = false)
+    @Override
+    public void addUser(User user) {
+        user.setCreatedTime(LocalDateTime.now());
+        user.setUpdateTime(LocalDateTime.now());
+        user.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
+        UsersMapper.addUser(user);
+    }
+
+    /**
+     * 删除用户
+     */
+    @RequirePermission(value = PermissionType.USER_DELETE, checkProject = false)
+    @Override
+    public void deleteUser(Integer[] ids) {
+        UsersMapper.deleteUser(ids);
+    }
+
+    /**
+     * 修改用户(管理员)
+     */
+    @RequirePermission(value = PermissionType.USER_UPDATE_ADMIN, checkProject = false)
+    @Override
+    public void updateUserAdmin(User user) {
+        user.setUpdateTime(LocalDateTime.now());
+        user.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
+        UsersMapper.updateUserAdmin(user);
+    }
+
+    /**
+     * 修改用户(普通用户)
+     */
+    @RequirePermission(value = PermissionType.USER_UPDATE, checkProject = false)
+    @Override
+    public void updateUser(User user) {
+        user.setUpdateTime(LocalDateTime.now());
+        user.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
+        UsersMapper.updateUser(user);
+    }
+
+//==================查询=====================
+
+
+    /**
+     * 根据id查询用户
+     */
+    @Override
+    public User getUserById(Integer id) {
+        return UsersMapper.getUserById(id);
+    }
+
+    /**
+     * 分页查询
+     */
+    @RequirePermission(value = PermissionType.USER_VIEW_SIMPLE, checkProject = false)
+    @Override
+    public PageBean page(Integer page,
+                         Integer pageSize,
+                         Integer id,
+                         String username,
+                         String realName,
+                         User.UserRole role,
+                         List<User.UserRole> excludeRoles,
+                         LocalDate begin,
+                         LocalDate end) throws BusinessException {
+        //PageHelper提供的分页信息封装类
+        PageInfo<User> pageBean = PageHelperUtils.safePageQuery(page, pageSize, () -> UsersMapper.list(id, username, realName, role, excludeRoles, begin, end));
+        return new PageBean(pageBean.getTotal(), pageBean.getList());
+    }
+
+    /**
+     * 检查用户名是否存在
+     */
+    @Override
+    public boolean existsByUsername(String username, Integer excludeId) {
+        return UsersMapper.existsByUsername(username, excludeId);
+    }
+
+    /**
+     * 统计用户总数
+     */
+    @Override
+    public long countUsers() {
+        return UsersMapper.countUsers();
+    }
+
+    /**
+     * 修改密码
+     */
+    @Override
+    public void changePassword(Integer id, String oldPassword, String newPassword) {
+        boolean isValid = UsersMapper.verifyOldPassword(id, DigestUtils.md5DigestAsHex(oldPassword.getBytes()));
+        if (!isValid) {
+            throw new RuntimeException("原密码错误");
+        }
+        User user = new User();
+        user.setId(id);
+        user.setPassword(DigestUtils.md5DigestAsHex(newPassword.getBytes()));
+        user.setUpdateTime(LocalDateTime.now());
+        UsersMapper.updateUser(user);
+    }
+
+    /**
+     * 获取项目经理列表
+     */
+    @Override
+    public List<User> getProjectManagers() {
+        return UsersMapper.list(null, null, null, User.UserRole.PROJECT_MANAGER, null, null, null);
+    }
+
+    /**
+     * 获取可用用户列表（用于项目成员选择）
+     */
+    @Override
+    public List<User> getAvailableUsers() {
+        return UsersMapper.list(null, null, null, null, null, null, null);
+    }
+
+    /**
+     * 获取通知接收人列表
+     */
+    @Override
+    public List<User> getNotificationRecipients() {
+        return UsersMapper.list(null, null, null, null, null, null, null);
+    }
+
+}

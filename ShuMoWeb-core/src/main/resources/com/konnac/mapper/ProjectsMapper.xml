@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.konnac.mapper.ProjectsMapper">
+
+    <sql id="commonSelect">
+        select p.id, p.name, p.description, p.manager_id, p.start_date, p.end_date,
+               p.priority, p.status, p.created_time, p.update_time, u.real_name as manager_name
+        from projects p
+        left join users u on p.manager_id = u.id
+    </sql>
+
+    <!-- 新增项目 -->
+    <insert id="addProject" useGeneratedKeys="true" keyProperty="id">
+        insert into projects(name, description, manager_id, start_date,
+                             end_date, priority, status, created_time, update_time)
+        VALUES (#{name}, #{description}, #{managerId}, #{startDate},
+                #{endDate}, #{priority}, #{status}, #{createdTime}, #{updateTime})
+    </insert>
+
+    <!-- 修改项目信息 -->
+    <update id="updateProject">
+        UPDATE projects
+        <set>
+            <if test="name != null and name.trim() != ''">
+                name = #{name},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="managerId != null">
+                manager_id = #{managerId},
+            </if>
+            <if test="startDate != null">
+                start_date = #{startDate},
+            </if>
+            <if test="endDate != null">
+                end_date = #{endDate},
+            </if>
+            <if test="priority != null">
+                priority = #{priority},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            update_time = #{updateTime},
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 分页查询（查询我参与的项目） -->
+    <select id="list" resultType="com.konnac.Project">
+        <include refid="commonSelect"/>
+        LEFT JOIN management.project_members pm ON p.id = pm.project_id
+        <where>
+            <!-- 用户参与条件：用户是项目经理 或者 是项目成员 -->
+            AND (
+            p.manager_id = #{currentUserId}
+            OR (pm.user_id = #{currentUserId} AND pm.status = 'ACTIVE')
+            )
+
+            <if test="id != null">
+                and p.id = #{id}
+            </if>
+            <if test="name != null and name.trim() != ''">
+                and p.name like concat('%', #{name}, '%')
+            </if>
+            <if test="description != null and description.trim() != ''">
+                and p.description like concat('%', #{description}, '%')
+            </if>
+
+            <!-- 项目起止时间范围查询 -->
+            <if test="begin != null">
+                and p.start_date >= #{begin}
+            </if>
+            <if test="end != null">
+                and #{end} >= p.end_date
+            </if>
+
+            <if test="priority != null">
+                and p.priority = #{priority}
+            </if>
+            <if test="status != null">
+                and p.status = #{status}
+            </if>
+
+        </where>
+        GROUP BY p.id
+        order by p.created_time desc
+    </select>
+
+    <!-- 分页条件查询所有项目 -->
+    <select id="listAll" resultType="com.konnac.Project">
+        <include refid="commonSelect"/>
+        <where>
+            <if test="id != null">
+                and p.id = #{id}
+            </if>
+            <if test="name != null and name.trim() != ''">
+                and p.name like concat('%', #{name}, '%')
+            </if>
+            <if test="description != null and description.trim() != ''">
+                and p.description like concat('%', #{description}, '%')
+            </if>
+            <!-- 项目起止时间范围查询 -->
+            <if test="begin != null">
+                and p.start_date >= #{begin}
+            </if>
+            <if test="end != null">
+                and #{end} >= p.end_date
+            </if>
+
+            <if test="priority != null">
+                and p.priority = #{priority}
+            </if>
+            <if test="status != null">
+                and p.status = #{status}
+            </if>
+
+        </where>
+        ORDER BY p.created_time DESC
+    </select>
+
+    <!-- 统计项目总数 -->
+    <select id="count" resultType="long">
+        select count(*) from projects
+    </select>
+</mapper>

@@ -1,0 +1,43 @@
+package com.konnac;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+    private Integer id;// 用户id
+    private String username;// 用户名
+    private String realName;// 真实姓名
+    private String password;// 密码
+    private String oldPassword;// 旧密码（用于修改密码）
+    private String avatar; //头像
+    private UserRole role; // ADMIN, PROJECT_MANAGER, EMPLOYEE
+    private String email; //要做邮箱验证
+    private String department; // 部门
+    private Integer departmentId; //部门id
+    private String phone; // 电话
+    private LocalDateTime createdTime; //创建时间
+    private LocalDateTime updateTime; //修改时间
+
+    @Getter
+    public enum UserRole {
+        ADMIN("管理员"),
+        PROJECT_MANAGER("项目经理"),
+        EMPLOYEE("普通员工");
+
+        private final String description;
+
+        UserRole(String description) {
+            this.description = description;
+        }
+    }
+}
+
+
