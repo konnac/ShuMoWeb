@@ -45,10 +45,10 @@ public class ProjectsMemberController {
     /**
      * 删除项目成员
      */
-    @DeleteMapping("/{userIds}")
-    public Result deleteProjectMembers(@PathVariable Integer projectId, Integer[] userIds, Integer operatorId) {
-        log.info("删除项目成员，项目id：{}，用户id：{}，操作人id：{}", projectId, userIds, operatorId);
-        projectsMemberService.deleteProjectMembers(projectId, userIds, operatorId);
+    @DeleteMapping("/{userId}")
+    public Result deleteProjectMembers(@PathVariable Integer projectId, @PathVariable Integer userId, Integer operatorId) {
+        log.info("删除项目成员，项目id：{}，用户id：{}，操作人id：{}", projectId, userId, operatorId);
+        projectsMemberService.deleteProjectMembers(projectId, userId, operatorId);
         return Result.success();
     }
 

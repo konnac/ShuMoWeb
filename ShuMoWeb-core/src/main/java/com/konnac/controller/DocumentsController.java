@@ -126,12 +126,12 @@ public class DocumentsController {
      * 下载项目文档
      */
     @RequirePermission(PermissionType.FILE_DOWNLOAD)
-    @GetMapping("/download/{id}")
-    public void downloadDocument(@PathVariable Integer id, HttpServletResponse response) {
+    @GetMapping("/download/{projectId}/{id}")
+    public void downloadDocument(@PathVariable Integer projectId, @PathVariable Integer id, HttpServletResponse response) {
         InputStream inputStream = null;
         try {
-            log.info("开始下载文档，文档ID: {}", id);
-            
+            log.info("开始下载文档，项目ID: {}, 文档ID: {}", projectId, id);
+
             Document document = documentsService.getDocumentById(id);
             if (document == null) {
                 log.error("文档不存在，文档ID: {}", id);
@@ -139,10 +139,17 @@ public class DocumentsController {
                 return;
             }
 
+            // 验证文档所属项目
+            if (!document.getProjectId().equals(projectId)) {
+                log.error("文档不属于指定项目，文档ID: {}, 项目ID: {}", id, projectId);
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+
             log.info("文档信息: fileName={}, fileUrl={}", document.getFileName(), document.getFileUrl());
-            
+
             inputStream = aliyunOSSUtil.downloadFile(document.getFileUrl());
-            
+
             if (inputStream == null) {
                 log.error("从OSS获取文件流失败，文件URL: {}", document.getFileUrl());
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -165,10 +172,10 @@ public class DocumentsController {
             }
             outputStream.flush();
             outputStream.close();
-            
+
             log.info("文档下载成功，总共传输字节数: {}", totalBytes);
         } catch (IOException e) {
-            log.error("文档下载失败，文档ID: {}", id, e);
+            log.error("文档下载失败，项目ID: {}, 文档ID: {}", projectId, id, e);
             try {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "文档下载失败: " + e.getMessage());
             } catch (IOException ex) {

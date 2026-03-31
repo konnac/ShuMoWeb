@@ -114,15 +114,17 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
      */
     @RequirePermission(value = PermissionType.MEMBER_REMOVE)
     @Override
-    public void deleteProjectMembers(Integer projectId, Integer[] userIds, Integer operatorId) {
-        log.info("删除项目成员: projectId={}, userIds={}, operatorId={}", projectId, userIds, operatorId);
-        if (userIds == null || userIds.length == 0) {
-            throw new BusinessException("成员列表不能为空");
-        }
+    public void deleteProjectMembers(Integer projectId, Integer userId, Integer operatorId) {
+        log.info("正在删除项目成员: projectId={}, userIds={}, operatorId={}", projectId, userId, operatorId);
 
-
-        for (Integer userId : userIds) {
             try {
+                //1.检查项目是否存在
+                Project project = projectsMapper.getProjectById(projectId);
+                if (project == null) {
+                    log.warn("项目不存在: projectId={}", projectId);
+                    throw new BusinessException("项目不存在");
+                }
+
                 //2.检查是否有未完成任务
                 int uncompletedTaskCount = tasksMapper.getUncompletedTaskCountByProjectIdAndUserId(projectId, userId);
                 if (uncompletedTaskCount > 0) {
@@ -131,12 +133,16 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
 
                 //3.从项目中移除成员
                 ProjectMember projectMember = projectsMemberMapper.getMemberByProjectIdAndUserId(projectId, userId);
-                if (projectMember != null) {
+
+                if (projectMember != null && projectMember.getStatus() == ProjectMember.MemberStatus.ACTIVE) {
+                    if (projectMember.getProjectRole().equals("PROJECT_MANAGER")){
+                        throw new BusinessException("项目管理员不能被移除");
+                    }
                     projectMember.setStatus(ProjectMember.MemberStatus.INACTIVE);
                     projectMember.setUpdateTime(LocalDateTime.now());
                     projectsMemberMapper.updateProjectMember(projectMember);
+                    log.warn("已从项目中移除成员: projectId={}, userId={},MemberStatus={}", projectId, userId, projectMember.getStatus());
                 }
-                log.info("从项目中移除成员: projectId={}, userId={}", projectId, userId);
 
                 //4.对被移除的员工发送通知
                 notificationService.sendRemovalNotification(projectId, userId, operatorId);
@@ -146,8 +152,6 @@ public class ProjectsMemberServiceImpl implements ProjectsMemberService {
                 throw new BusinessException("移除成员异常: " + e.getMessage());
             }
 
-
-        }
     }
 
     /**

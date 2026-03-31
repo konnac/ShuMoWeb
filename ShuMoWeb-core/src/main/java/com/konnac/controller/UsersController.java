@@ -102,9 +102,9 @@ public class UsersController {
 
     //获取可用用户列表（用于项目成员选择）
     @RequirePermission(value = PermissionType.MEMBER_ADD)
-    @GetMapping("/available-users")
-    public Result getAvailableUsers() {
-        log.info("获取可用用户列表");
+    @GetMapping("/{projectId}/available-users")
+    public Result getAvailableUsers(@PathVariable Integer projectId) {
+        log.info("获取可用用户列表，项目ID：{}", projectId);
         List<User> availableUsers = usersService.getAvailableUsers();
         return Result.success(availableUsers);
     }

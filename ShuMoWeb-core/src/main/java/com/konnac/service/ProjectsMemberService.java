@@ -18,7 +18,7 @@ public interface ProjectsMemberService {
     /**
      * 删除项目成员
      */
-    void deleteProjectMembers(Integer projectId, Integer[] userIds, Integer operatorId);
+    void deleteProjectMembers(Integer projectId, Integer userId, Integer operatorId);
 
     /**
      * 更新项目成员角色

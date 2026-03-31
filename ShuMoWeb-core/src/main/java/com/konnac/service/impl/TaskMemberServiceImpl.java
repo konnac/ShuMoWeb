@@ -113,6 +113,9 @@ public class TaskMemberServiceImpl implements TaskMemberService {
             try{
                 TaskMember taskMember = tasksMemberMapper.getMemberByTaskIdAndUserId(taskId, userId);
                 if (taskMember != null){
+                    if (taskMember.getTaskRole().equals("ASSIGNEE")){
+                        throw new BusinessException("任务负责人不能被删除");
+                    }
                     taskMember.setStatus(TaskMember.MemberStatus.INACTIVE);
                     taskMember.setUpdateTime(LocalDateTime.now());
                     tasksMemberMapper.updateTaskMember(taskMember);
