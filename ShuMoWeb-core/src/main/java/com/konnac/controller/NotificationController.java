@@ -8,6 +8,9 @@ import com.konnac.annotation.RequirePermission;
 import com.konnac.enums.PermissionType;
 
 import com.konnac.service.NotificationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,14 +23,12 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/notifications")
+@Tag(name = "通知管理", description = "系统通知和公告管理接口")
 public class NotificationController {
     @Autowired
     private NotificationService notificationService;
 
-    /**
-     * 发送普通公告(管理员和项目经理)
-     */
-    @PostMapping("/send/nor-noti")
+    @Operation(summary = "发送普通公告", description = "向指定用户发送普通公告(管理员和项目经理)")
     @RequirePermission(value = PermissionType.NOTIFICATION_SEND, checkProject = false, checkTask = false)
     public Result sendNorNotification(@RequestParam List<Integer> userIds, @RequestBody Notification notification) {
         log.info("发送普通公告，userIds={}, notification={}", userIds, notification);
@@ -44,9 +45,7 @@ public class NotificationController {
         }
     }
 
-    /**
-     * 发送系统公告(管理员)
-     */
+    @Operation(summary = "发送系统公告", description = "向指定用户发送系统公告(仅管理员)")
     @PostMapping("/send/sys-noti")
     @RequirePermission(value = PermissionType.NOTIFACATION_SEND_ADMIN, checkProject = false, checkTask = false)
     public Result sendSysNotification(@RequestParam List<Integer> userIds, @RequestBody Notification notification) {
@@ -68,9 +67,7 @@ public class NotificationController {
 
 
 
-    /**
-     * 批量发送通知给项目成员
-     */
+    @Operation(summary = "批量发送通知给项目成员", description = "向指定项目的所有成员发送通知")
     @PostMapping("/send/project-members")
     public Result sendNotificationToProjectMembers(Integer projectId, String title, String content,
                                                    Notification.NotificationType type) {
@@ -127,9 +124,7 @@ public class NotificationController {
 
 //=============查询通知=============
 
-    /**
-     * 分页查询
-     */
+    @Operation(summary = "分页查询通知", description = "根据多种条件分页查询通知列表")
     @RequestMapping("/page")
     public Result page(
             @RequestParam(defaultValue = "1") Integer page,

@@ -5,6 +5,8 @@ import com.konnac.Result;
 import com.konnac.User;
 import com.konnac.service.LoginService;
 import com.konnac.utils.JwtUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,12 +18,12 @@ import java.util.Map;
 
 @Slf4j
 @RestController
+@Tag(name = "登录管理", description = "用户登录相关接口")
 public class LoginController {
     @Autowired
     private LoginService loginService;
-    /**
-     * 用户登录
-     */
+
+    @Operation(summary = "用户登录", description = "根据用户名和密码进行用户登录认证")
     @PostMapping("/login")
     public Result login(@RequestBody User user){
         log.info("用户登录，用户名：{}", user.getUsername());

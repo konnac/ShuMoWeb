@@ -7,6 +7,9 @@ import com.konnac.annotation.RequirePermission;
 import com.konnac.enums.PermissionType;
 
 import com.konnac.service.TasksService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,12 +17,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
-/*
-* 任务管理 - 隶属于项目
-*/
 @Slf4j
 @RestController
 @RequestMapping("/projects/{projectId}/tasks")
+@Tag(name = "任务管理", description = "项目任务创建、修改、删除、查询等管理接口")
 public class TasksController {
     @Autowired
     private TasksService tasksService;
@@ -34,7 +35,7 @@ public class TasksController {
         return Result.success();
     }
 
-    //批量删除任务
+    @Operation(summary = "批量删除任务", description = "根据任务ID数组批量删除任务")
     @DeleteMapping("/{ids}")
     public Result deleteTask(@PathVariable Integer projectId, @PathVariable Integer[] ids) {
         log.info("删除任务，项目id：{}，任务id：{}", projectId, ids);
@@ -42,7 +43,7 @@ public class TasksController {
         return Result.success();
     }
 
-    //根据id查询任务
+    @Operation(summary = "查询任务", description = "根据任务ID查询任务详情")
     @RequirePermission(value = PermissionType.MEMBER_VIEW, checkProject = true, projectIdParam = "projectId")
     @GetMapping("/{id}")
     public Result getTask(@PathVariable Integer projectId, @PathVariable Integer id) {

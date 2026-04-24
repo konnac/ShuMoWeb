@@ -2,6 +2,8 @@ package com.konnac.controller;
 
 import com.konnac.Result;
 import com.konnac.utils.AliyunOSSUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/upload")
+@Tag(name = "文件上传", description = "通用文件上传接口")
 public class FileUploadController {
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadController.class);
@@ -32,6 +35,7 @@ public class FileUploadController {
     @Value("${avatar.allowed-types}")
     private String allowedTypes;
 
+    @Operation(summary = "上传文件", description = "通用文件上传接口，上传头像或其他文件到阿里云OSS")
     @PostMapping
     public Result uploadFile(@RequestParam("file") MultipartFile file) {
         try {

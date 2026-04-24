@@ -26,6 +26,7 @@
         <!-- 定义依赖版本 -->
         <mybatis.version>3.0.3</mybatis.version>
         <pagehelper.version>2.1.0</pagehelper.version>
+        <springdoc.version>2.5.0</springdoc.version>
     </properties>
 
     <dependencies>

@@ -9,6 +9,9 @@ import com.konnac.enums.PermissionType;
 
 import com.konnac.service.ProjectsService;
 import com.konnac.utils.AuthUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,12 +19,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
-/*
-*  项目管理
-*/
 @Slf4j
 @RestController
 @RequestMapping("/projects")
+@Tag(name = "项目管理", description = "项目创建、修改、删除、查询等管理接口")
 public class ProjectsController {
     @Autowired
     private ProjectsService projectsService;
@@ -38,9 +39,7 @@ public class ProjectsController {
         return Result.success();
     }
 
-    /**
-     *  删除项目
-     */
+    @Operation(summary = "删除项目", description = "根据项目ID数组批量删除项目")
     @DeleteMapping("/{ids}")
     public Result deleteProject(@PathVariable Integer[] ids, Integer operatorId) {
         log.info("删除项目，项目id：{},操作人id: {} ", ids, operatorId);
@@ -78,9 +77,7 @@ public class ProjectsController {
         return Result.success(pageBean);
     }
 
-    /**
-     * 统计所有项目数量
-     */
+    @Operation(summary = "统计项目数量", description = "获取系统中项目的总数量")
     @GetMapping("/count")
     public Result countProjects() {
         log.info("统计项目总数量");

@@ -6,6 +6,9 @@ import com.konnac.Report;
 import com.konnac.Result;
 import com.konnac.Task;
 import com.konnac.service.ReportsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,6 +20,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/reports")
+@Tag(name = "报表管理", description = "报表创建、修改、查询等管理接口")
 public class ReportsController {
     @Autowired
     private ReportsService reportsService;
@@ -31,9 +35,7 @@ public class ReportsController {
         return Result.success();
     }
 
-    /**
-     * 修改报表
-     */
+    @Operation(summary = "修改报表", description = "更新报表信息")
     @PutMapping("/{id}")
     public Result updateReport(@PathVariable Integer id, @RequestBody Report report) {
         log.info("修改报表，报表id：{}，报表信息：{}", id, report);
@@ -68,9 +70,7 @@ public class ReportsController {
         return Result.success(pageBean);
     }
 
-    /**
-     * 获取指定时间段内的已完成任务
-     */
+    @Operation(summary = "获取已完成任务", description = "获取指定时间段内用户已完成的任务列表")
     @GetMapping("/completed-tasks")
     public Result getCompletedTasks(@RequestParam Integer userId,
                                     @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,

@@ -10,6 +10,9 @@ import com.konnac.enums.PermissionType;
 import com.konnac.service.ProjectsMemberService;
 import com.konnac.utils.AuthUtils;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +22,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/projects/{projectId}/members")
+@Tag(name = "项目成员管理", description = "项目成员添加、删除、角色更新等管理接口")
 public class ProjectsMemberController {
     @Autowired
     private ProjectsMemberService projectsMemberService;
@@ -52,9 +56,7 @@ public class ProjectsMemberController {
         return Result.success();
     }
 
-    /**
-     * 更新项目成员角色
-     */
+    @Operation(summary = "更新项目成员角色", description = "修改项目成员的角色")
     @PutMapping("/{userId}")
     public Result updateMemberRole(@PathVariable Integer projectId, @PathVariable Integer userId, @RequestBody ProjectMember projectMember) {
         log.info("更新项目成员角色，项目id：{}，用户id：{}，新角色：{}，操作人id：{}", projectId, userId, projectMember.getProjectRole(), AuthUtils.getCurrentUserId());
@@ -83,9 +85,7 @@ public class ProjectsMemberController {
         return Result.success(pageBean);
     }
 
-    /**
-     * 激活项目成员
-     */
+    @Operation(summary = "激活项目成员", description = "激活指定项目成员")
     @PutMapping("/{userId}/activate")
     public Result activateMember(@PathVariable Integer projectId, @PathVariable Integer userId) {
         Integer operatorId = UserContext.getCurrentUserId();

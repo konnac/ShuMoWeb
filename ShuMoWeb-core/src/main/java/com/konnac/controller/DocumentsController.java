@@ -9,6 +9,9 @@ import com.konnac.service.DocumentsService;
 import com.konnac.utils.AliyunOSSUtil;
 import com.konnac.utils.AuthUtils;
 import com.konnac.utils.FileTypeValidator;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +44,7 @@ public class DocumentsController {
     @Autowired
     private FileTypeValidator fileTypeValidator;
 
-    /**
-     * 上传文档
-     */
+    @Operation(summary = "上传文档", description = "上传项目文档到阿里云OSS存储")
     @RequirePermission(PermissionType.FILE_UPLOAD)
     @PostMapping("/upload")
     public Result uploadDocument(@RequestParam("projectId") Integer projectId,
@@ -72,9 +73,7 @@ public class DocumentsController {
         }
     }
 
-    /**
-     * 修改文档
-     */
+    @Operation(summary = "修改文档", description = "更新文档的分类和描述信息")
     @RequirePermission(value = PermissionType.FILE_UPLOAD)
     @PutMapping
     public Result updateDocument(@RequestParam("projectId") Integer projectId,
@@ -107,9 +106,7 @@ public class DocumentsController {
         }
     }
 
-    /**
-     * 查询文档
-     */
+    @Operation(summary = "查询文档", description = "根据文档ID查询文档详情")
     @RequirePermission(PermissionType.FILE_VIEW)
     @GetMapping("/{id}")
     public Result getDocumentById(@PathVariable Integer id) {

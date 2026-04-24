@@ -9,17 +9,17 @@ import com.konnac.context.UserContext;
 import com.konnac.service.ProjectsService;
 import com.konnac.service.TasksService;
 import com.konnac.service.UsersService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 提供总览的功能接口
- */
 @Slf4j
 @RestController
 @RequestMapping("/dashboard")
+@Tag(name = "仪表盘", description = "系统总览数据接口")
 public class DashboardController {
     @Autowired
     private ProjectsService projectsService;
@@ -30,11 +30,7 @@ public class DashboardController {
     @Autowired
     private TasksService tasksService;
 
-    /**
-     * 获取管理员总览数据
-     * 返回系统总体的用户、项目、任务统计数据
-     * @return Result 包含AdminOverview数据的成功响应结果
-     */
+    @Operation(summary = "获取管理员总览数据", description = "返回系统总体的用户、项目、任务统计数据")
     @RequestMapping
     public Result index() {
         log.debug("DashboardController.index()");

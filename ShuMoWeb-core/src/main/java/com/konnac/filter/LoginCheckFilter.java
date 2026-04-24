@@ -31,11 +31,13 @@ public class LoginCheckFilter implements Filter {
             "/register",
             "/captcha",
             "/doc.html",
-            "/webjars/.*",
+            "/webjars/",
             "/v2/api-docs",
+            "/v3/api-docs",
             "/swagger-resources",
-            "/swagger-ui.html",
-            "/favicon.ico"
+            "/swagger-ui/",
+            "/swagger-ui/index.html",
+            "/swagger-ui.html"
     };
 
     @Override

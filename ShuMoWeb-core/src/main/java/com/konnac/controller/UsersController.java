@@ -1,5 +1,4 @@
 package com.konnac.controller;
-
 /**
  * 员工管理(users表)
  */
@@ -11,6 +10,9 @@ import com.konnac.annotation.RequirePermission;
 
 import com.konnac.enums.PermissionType;
 import com.konnac.service.UsersService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -22,6 +24,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/users")
+@Tag(name = "员工管理", description = "员工账号创建、修改、删除、查询等管理接口")
 public class UsersController {
     @Autowired
     private UsersService usersService;
@@ -42,7 +45,7 @@ public class UsersController {
         return Result.success();
     }
 
-    //修改员工(管理员)
+    @Operation(summary = "修改员工(管理员)", description = "管理员修改员工信息")
     @PutMapping("/admin/{id}")
     public Result updateUserAdmin(@RequestBody User user) {
         log.info("修改员工，员工信息：{}", user);
@@ -76,7 +79,7 @@ public class UsersController {
         return Result.success(pageBean);
     }
 
-    //检查用户名是否存在
+    @Operation(summary = "检查用户名是否存在", description = "验证用户名是否已被使用")
     @GetMapping("/check-username")
     public Result checkUsername(@RequestParam String username, @RequestParam(required = false) Integer excludeId) {
         log.info("检查用户名是否存在，参数：username={},excludeId={}", username, excludeId);
@@ -84,7 +87,7 @@ public class UsersController {
         return Result.success(!exists);
     }
 
-    //修改密码
+    @Operation(summary = "修改密码", description = "修改当前用户或指定用户的密码")
     @PutMapping("/change-password")
     public Result changePassword(@RequestBody User user) {
         log.info("修改密码，用户id：{}", user.getId());
@@ -109,7 +112,7 @@ public class UsersController {
         return Result.success(availableUsers);
     }
 
-    //获取通知接收人列表
+    @Operation(summary = "获取通知接收人列表", description = "获取所有可以接收通知的用户列表")
     @RequirePermission(value = PermissionType.NOTIFICATION_MEMBERVIEW,checkProject = false)
     @GetMapping("/notification-recipients")
     public Result getNotificationRecipients() {

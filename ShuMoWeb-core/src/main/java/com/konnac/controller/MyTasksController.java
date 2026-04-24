@@ -5,6 +5,8 @@ import com.konnac.Result;
 import com.konnac.Task;
 import com.konnac.service.TasksService;
 import com.konnac.utils.AuthUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -15,13 +17,12 @@ import java.time.LocalDate;
 @Slf4j
 @RestController
 @RequestMapping("/my-tasks")
+@Tag(name = "我的任务", description = "当前用户任务查询接口")
 public class MyTasksController {
     @Autowired
     private TasksService tasksService;
 
-    /**
-     * 分页查询我的任务
-     */
+    @Operation(summary = "分页查询我的任务", description = "根据当前登录用户分页查询其负责的任务列表")
     @RequestMapping
     public Result page(@RequestParam(defaultValue = "1") Integer page,
                        @RequestParam(defaultValue = "10") Integer pageSize,

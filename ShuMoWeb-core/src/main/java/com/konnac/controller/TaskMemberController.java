@@ -9,6 +9,9 @@ import com.konnac.enums.PermissionType;
 import com.konnac.context.UserContext;
 
 import com.konnac.service.TaskMemberService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +21,12 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/projects/{projectId}/tasks/{taskId}/members")
+@Tag(name = "任务成员管理", description = "任务成员添加、删除、角色更新等管理接口")
 public class TaskMemberController {
     @Autowired
     private TaskMemberService taskMemberService;
 
-    //===========增删改任务成员=============
-    /**
-     * 添加任务成员
-     */
+    @Operation(summary = "添加任务成员", description = "向任务中添加新成员并指定角色")
     @RequirePermission(value = PermissionType.TASK_ASSIGN, checkTask = true)
     @PostMapping
     public Result addTaskMember(@PathVariable Integer projectId, @PathVariable Integer taskId, @RequestBody TaskMember taskMember){
@@ -51,9 +52,7 @@ public class TaskMemberController {
         return Result.success();
     }
 
-    /**
-     * 更新任务成员角色
-     */
+    @Operation(summary = "更新任务成员角色", description = "修改任务成员的角色")
     @RequirePermission(value = PermissionType.TASK_UPDATE, checkTask = true)
     @PutMapping("/{userId}")
     public Result updateMemberRole(@PathVariable Integer projectId, @PathVariable Integer taskId, @PathVariable Integer userId, @RequestParam Integer operatorId, @RequestParam String newRole){
@@ -94,9 +93,7 @@ public class TaskMemberController {
         return Result.success(pageBean);
     }
 
-    /**
-     * 发送任务完成通知给任务成员
-     */
+    @Operation(summary = "发送任务完成通知", description = "向任务成员发送任务完成通知")
     @RequirePermission(value = PermissionType.MEMBER_VIEW, checkProject = true)
     @PostMapping("/{id}/")
     public Result sendTaskCompleteNotice(@PathVariable Integer projectId, @PathVariable Integer taskId){
